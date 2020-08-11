@@ -1,6 +1,6 @@
-name: Prototyp
-beschreibung: Ein Prototyp für Module
+name: Website
+beschreibung: Der öffentliche Bereich des Webauftritts
 lehrernetz: false
 autor: Digitaler Schulhof
-version: 0.1
+version: 1.0
 einstellungen: true
