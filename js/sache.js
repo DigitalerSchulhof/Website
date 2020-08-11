@@ -1,0 +1,3 @@
+proto.tableflip = () => {
+  console.log("(╯°□°)╯︵ ┻━┻");
+}
