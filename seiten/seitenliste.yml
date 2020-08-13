@@ -1,2 +1,2 @@
 seiten:
-  "Website"
+  "/Website.*/": "website.php"

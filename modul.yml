@@ -2,5 +2,6 @@ name: Website
 beschreibung: Der öffentliche Bereich des Webauftritts
 lehrernetz: false
 autor: Digitaler Schulhof
+seitenPrio: 2
 version: 1.0
 einstellungen: true
