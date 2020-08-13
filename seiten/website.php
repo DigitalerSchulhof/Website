@@ -129,6 +129,7 @@ if(count($url) > 1) {
     }
   } else {
     // Seite
+    array_shift($url);
     $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STANDARDSPRACHE, $versionen[$DSH_STANDARDSPRACHE][$standardversion], $modi[$DSH_STANDARDSPRACHE][$standardmodus]], $url);
   }
 } else {
@@ -157,7 +158,7 @@ class Seite extends Kern\Seite {
     if ($this->aktionszeile) {
       global $versionen, $modi, $startseite, $standardversion, $standardmodus, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS, $DSH_SEITENPFAD;
       $pfad = array(
-        "Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$standardversion]}/{$modi[$DSH_SPRACHE][$standardmodus]}/{$startseite[$DSH_SPRACHE]}" => "Website",
+       "Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$standardversion]}/{$modi[$DSH_SPRACHE][$standardmodus]}/{$startseite[$DSH_SPRACHE]}" => $startseite[$DSH_SPRACHE],
       );
       $pf = "";
       foreach($DSH_SEITENPFAD as $i => $p) {
