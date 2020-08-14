@@ -1,2 +1,2 @@
 seiten:
-  "/Website.*/": "website.php"
+  "/^(?!Schulhof).*$/": "website.php"
