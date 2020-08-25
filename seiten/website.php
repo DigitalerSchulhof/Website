@@ -1,20 +1,19 @@
 <?php
 namespace Website;
-use Kern;
 use UI;
 
 /*
 
   Ideale URL (RegEx): sei
-  {z} : [\-\:\(\)\[\]\{\}äöüßáéíóúàèìòùæâêîôûøØÇãåçëïõÿñ0-9a-z]
-  {s} : ((?:{z}+\/)*(?:{z}+)+)
+  {z} : [\-\:\(\)\[\]\{\}äöüßáéíóúàèìòùæâêîôûøØÇãåçëïõÿñ0-9a-z]     Eine Seitenbezeichnung
+  {s} : ((?:{z}+\/)*(?:{z}+)+)                                      Der komplette Seitenpfad
 
   /^Website\/(DE|EN|FR)\/(Alt|Aktuell|Neu)\/(Sehen|Bearbeiten)\/{s}$/i
     => /^Website\/(DE|EN|FR)\/(Alt|Aktuell|Neu)\/(Sehen|Bearbeiten)\/((?:[\-\:\(\)\[\]\{\}äöüßáéíóúàèìòùæâêîôûøØÇãåçëïõÿñ0-9a-z]+\/)*(?:[\-\:\(\)\[\]\{\}äöüßáéíóúàèìòùæâêîôûøØÇãåçëïõÿñ0-9a-z]+)+)$/i
 
   Bei Sprache, Version und Modus sind die jeweils Vorherigen notwendig, um eine gültige URL zu bilden.
 
-  Abkürzen ist insoweit möglich, als bei Sprache »DE«, bei Version »Aktuell«, und bei Modus »Sehen« angenommen wird, sofern dises nicht gegeben sind:
+  Abkürzen ist insoweit möglich, als bei Sprache »DE«, bei Version »Aktuell«, und bei Modus »Sehen« angenommen wird, sofern dises nicht anders gegeben ist:
 
 
   Website/{s}                     -> Website/DE/Aktuell/Sehen/{s}
@@ -27,7 +26,7 @@ use UI;
 
   Ist Sprache, Version oder Modus gegeben, muss {s} angegeben sein.
 
-  Beim Anlegen einer direkten Unterseite von / sind folgende Bezeichnungen nicht erlaubt:
+  Beim Anlegen einer direkten Unterseite von /Website sind folgende Bezeichnungen nicht erlaubt:
   - DE | EN | FR | (Weitere Sprachkürzel)
   - [Alt | Aktuell | Neu] | [Old | Current | New] | [Ancien | Actuel | Neuveau] | (Weitere Versionen nach Sprache), je nach gewählter Sprache
   - [Sehen | Bearbeiten] | [View | Edit] | [Void | Éditer] | (Weitere Modi nach Sprache), je nach gewählter Sprache
@@ -38,40 +37,30 @@ use UI;
 // Global machen
 global $versionen, $modi, $startseite, $standardversion, $standardmodus, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS, $DSH_SEITENPFAD;
 
-$DSH_STANDARDSPRACHE = "DE";
+$DSH_SPRACHEN = [];
+$versionen    = [];
+$modi         = [];
+$fehler       = [];
+$startseite   = [];
 
-$DSH_SPRACHEN = array(
-  "DE"  => "Deutsch",
-  "EN"  => "English",
-  "FR"  => "Français"
-);
+$anf = $DBS->anfrage("SELECT * FROM website_sprachen");
+while($anf->werte($id, $a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeiten, $f, $s)) {
+  $name       = str_replace(" ", "_", $name);
+  $namestd    = str_replace(" ", "_", $namestd);
+  $alt        = str_replace(" ", "_", $alt);
+  $aktuell    = str_replace(" ", "_", $aktuell);
+  $neu        = str_replace(" ", "_", $neu);
+  $sehen      = str_replace(" ", "_", $sehen);
+  $bearbeiten = str_replace(" ", "_", $bearbeiten);
+  $f          = str_replace(" ", "_", $f);
+  $s          = str_replace(" ", "_", $s);
 
-$versionen = array(
-  "DE"  => ["Alt",    "Aktuell",  "Neu"],
-  "EN"  => ["Old",    "Current",  "New"],
-  "FR"  => ["Ancien", "Actuel",   "Neuveau"]  // Franz-Kenntnisse reichen 'gerade noch so' aus :D
-);
-
-$modi = array(
-  "DE"  => ["Sehen",  "Bearbeiten"],
-  "EN"  => ["View",   "Edit"],
-  "FR"  => ["Voir",   "Éditer"]
-);
-
-$fehlerSeiten = array(
-  404 => array(
-    "DE"  => "Fehler/404",
-    "EN"  => "Error/404",
-    "FR"  => "Erreur/404"
-  )
-);
-
-$startseite = array(
-  "DE"  => "Startseite",
-  "EN"  => "Homepage",
-  "FR"  => "Accueil"
-);
-
+  $DSH_SPRACHEN [$a2] = [$name, $namestd];
+  $versionen    [$a2] = [$alt, $aktuell, $neu];
+  $modi         [$a2] = [$sehen, $bearbeiten];
+  $fehler       [$a2] =  $f;
+  $startseite   [$a2] =  $s;
+}
 
 $WEBSITE_URL = [];
 
@@ -150,51 +139,7 @@ $DSH_SEITENPFAD     = array_splice($url, 3);
 
 // Website/Sprache/Version/Modus/Seiten..
 
-class Seite extends Kern\Seite {
-  public function __construct($titel) {
-    parent::__construct($titel, false, true);
-  }
-
-  public function __toString() : string {
-    global $WEBSITE_URL;
-    $code = "";
-    if ($this->aktionszeile) {
-      global $versionen, $modi, $startseite, $standardversion, $standardmodus, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS, $DSH_SEITENPFAD;
-      $pfad = array(
-       "Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$standardversion]}/{$modi[$DSH_SPRACHE][$standardmodus]}/{$startseite[$DSH_SPRACHE]}" => $startseite[$DSH_SPRACHE],
-      );
-      $pf = "";
-      foreach($DSH_SEITENPFAD as $i => $p) {
-        if($i === count($DSH_SEITENPFAD)-1) {
-          // Letzte Seite
-
-          $extra = [];
-          if($DSH_SEITENVERSION !== $standardversion) {
-            $extra[] = $versionen[$DSH_SPRACHE][$DSH_SEITENVERSION];
-          }
-          if($DSH_SEITENMODUS !== $standardmodus) {
-            $extra[] = $modi[$DSH_SPRACHE][$DSH_SEITENMODUS];
-          }
-          if(count($extra) > 0) {
-            $p .= " (".join(", ", $extra).")";
-          }
-
-          $pfad = array_merge($pfad, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$DSH_SEITENVERSION]}/{$modi[$DSH_SPRACHE][$DSH_SEITENMODUS]}/$pf$p" => "$p"));
-        } else {
-          $pfad = array_merge($pfad, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$standardversion]}/{$modi[$DSH_SPRACHE][$standardmodus]}/$pf$p" => $p));
-          $pf .= "$p/";
-        }
-      }
-      $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($pfad);
-    }
-    foreach ($this->zeilen as $z) {
-      $code .= $z;
-    }
-    return $code.$this->codedanach;
-  }
-}
-
-$SEITE = new Seite("Website");
+$SEITE = new Seite::vonPfad($DSH_SPRACHE, $DSH_SEITENPFAD, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
 
 $SEITE[] = UI\Zeile::standard(new UI\Meldung("Gültige URL", "Die URL wurde folgendermaßen interpretiert: <b>".join("/", $WEBSITE_URL)."</b>", "Erfolg"));
 

@@ -1,3 +1,3 @@
 <?php
-//include_once("$KLASSEN/klasse2.php");
+include_once("$KLASSEN/seite.php");
 ?>
