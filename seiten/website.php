@@ -42,11 +42,10 @@ $DSH_STANDARDSPRACHE = \Kern\Einstellungen::laden("Website", "Standardsprache");
 $DSH_SPRACHEN = [];
 $versionen    = [];
 $modi         = [];
-$fehler       = [];
 $startseite   = [];
 
-$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {fehler}, (SELECT {pfad} FROM website_seitendaten as wsd JOIN website_seiten as wse ON wse.id = wsd.seite WHERE wse.art = 0 AND wsd.sprache = wsp.id) FROM website_sprachen as wsp");
-while($anf->werte($a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeiten, $f, $s)) {
+$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, (SELECT {pfad} FROM website_seitendaten as wsd JOIN website_seiten as wse ON wse.id = wsd.seite WHERE wse.art = 0 AND wsd.sprache = wsp.id) FROM website_sprachen as wsp");
+while($anf->werte($a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeiten, $s)) {
   $name       = str_replace(" ", "_", $name);
   $namestd    = str_replace(" ", "_", $namestd);
   $alt        = str_replace(" ", "_", $alt);
@@ -54,19 +53,15 @@ while($anf->werte($a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeite
   $neu        = str_replace(" ", "_", $neu);
   $sehen      = str_replace(" ", "_", $sehen);
   $bearbeiten = str_replace(" ", "_", $bearbeiten);
-  $f          = str_replace(" ", "_", $f);
   $s          = str_replace(" ", "_", $s);
 
   $DSH_SPRACHEN [$a2] = [$name, $namestd];
   $versionen    [$a2] = [$alt, $aktuell, $neu];
   $modi         [$a2] = [$sehen, $bearbeiten];
-  $fehler       [$a2] =  $f;
   $startseite   [$a2] =  $s;
 }
 
 $WEBSITE_URL = [];
-
-$fehler = false;
 
 $standardmodus = 0;
 $standardversion = 1;
@@ -75,23 +70,26 @@ $standardversion = 1;
 
 $url = $DSH_URL;
 
-if(count($url) > 1) {
-  if(in_array($url[1], array_keys($DSH_SPRACHEN))) {
+if($url[0] === "Website") {
+  array_shift($url);
+}
+
+if(count($url) > 0) {
+  if(in_array($url[0], array_keys($DSH_SPRACHEN))) {
     // Sprache gegeben
-    $WEBSITE_URL[0] = $url[1];
-    if(count($url) > 2) {
-      if(in_array($url[2], $versionen[$WEBSITE_URL[0]])) {
+    $WEBSITE_URL[0] = $url[0];
+    if(count($url) > 1) {
+      if(in_array($url[1], $versionen[$WEBSITE_URL[0]])) {
         // Version gegeben
-        $WEBSITE_URL[1] = $url[2];
-        if(count($url) > 3) {
-          if(in_array($url[3], $modi[$WEBSITE_URL[0]])) {
+        $WEBSITE_URL[1] = $url[1];
+        if(count($url) > 2) {
+          if(in_array($url[2], $modi[$WEBSITE_URL[0]])) {
             // Modus gegeben
-            $WEBSITE_URL[2] = $url[3];
+            $WEBSITE_URL[2] = $url[2];
             if(count($url) > 4) {
               // Seite gegeben
 
               // Sprache, Version, Modus, Seite
-              array_shift($url);
               array_shift($url);
               array_shift($url);
               array_shift($url);
@@ -104,7 +102,6 @@ if(count($url) > 1) {
             // Sprache, Version, Seite
             array_shift($url);
             array_shift($url);
-            array_shift($url);
             $WEBSITE_URL = array_merge($WEBSITE_URL, [$modi[$WEBSITE_URL[0]][$standardmodus]], $url);
           }
         } else {
@@ -114,7 +111,6 @@ if(count($url) > 1) {
       } else {
         // Sprache, Seite
         array_shift($url);
-        array_shift($url);
         $WEBSITE_URL = array_merge($WEBSITE_URL, [$versionen[$WEBSITE_URL[0]][$standardversion], $modi[$WEBSITE_URL[0]][$standardmodus]], $url);
       }
     } else {
@@ -123,14 +119,12 @@ if(count($url) > 1) {
     }
   } else {
     // Seite
-    array_shift($url);
     $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STANDARDSPRACHE, $versionen[$DSH_STANDARDSPRACHE][$standardversion], $modi[$DSH_STANDARDSPRACHE][$standardmodus]], $url);
   }
 } else {
   // keine Seite
   $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STANDARDSPRACHE, $versionen[$DSH_STANDARDSPRACHE][$standardversion], $modi[$DSH_STANDARDSPRACHE][$standardmodus]], [$startseite[$DSH_STANDARDSPRACHE]]);
 }
-
 // Ab hier ist $WEBSITE_URL eine gültige Seite, OHNE Website/ vorne dran
 
 $DSH_SPRACHE        = $WEBSITE_URL[0];                                          // Sprachkürzel

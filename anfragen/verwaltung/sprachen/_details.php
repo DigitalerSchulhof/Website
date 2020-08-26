@@ -33,7 +33,7 @@ function spracheDetails($id = null) : string {
   $formular[] = new UI\Formularfeld(new UI\Ueberschrift("3", "Namen:"));
   $formular[] = new UI\FormularFeld(new UI\InhaltElement("Kennung (Alpha-2):"),       (new UI\Textfeld("{$idpre}A2"))           ->setWert($a2));
   $formular[] = new UI\FormularFeld(new UI\InhaltElement("Name:"),                    (new UI\Textfeld("{$idpre}Name"))         ->setWert($name));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Name (Standardsprache):"), (new UI\Textfeld("{$idpre}NameStandard")) ->setWert($namestandard));
+  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Name (Standardsprache):"),  (new UI\Textfeld("{$idpre}NameStandard")) ->setWert($namestandard));
 
   $formular[] = new UI\Formularfeld(new UI\Ueberschrift("3", "Übersetzungen:"));
   $formular[] = new UI\FormularFeld(new UI\InhaltElement("Alt:"),                     (new UI\Textfeld("{$idpre}Alt"))          ->setWert($alt));
