@@ -45,8 +45,8 @@ class Seite extends Kern\Seite {
     return $code.$this->codedanach;
   }
 
-  public static function vonPfad($sprache, $pfad, $version = 0, $modus = 1) : Seite {
-    
+  public static function vonPfad($sprache, $pfad, $version, $modus) : Seite {
+    var_dump($sprache, $pfad, $version, $modus);
   }
 }
 

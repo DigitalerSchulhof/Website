@@ -37,6 +37,8 @@ use UI;
 // Global machen
 global $versionen, $modi, $startseite, $standardversion, $standardmodus, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS, $DSH_SEITENPFAD;
 
+\Kern\Einstellungen::laden("Website", "Standardsprache");
+
 $DSH_SPRACHEN = [];
 $versionen    = [];
 $modi         = [];
@@ -44,7 +46,7 @@ $fehler       = [];
 $startseite   = [];
 
 $anf = $DBS->anfrage("SELECT * FROM website_sprachen");
-while($anf->werte($id, $a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeiten, $f, $s)) {
+while($anf->werte($id, $a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeiten, $f, $s, $NULL, $NULL)) {
   $name       = str_replace(" ", "_", $name);
   $namestd    = str_replace(" ", "_", $namestd);
   $alt        = str_replace(" ", "_", $alt);
@@ -139,7 +141,7 @@ $DSH_SEITENPFAD     = array_splice($url, 3);
 
 // Website/Sprache/Version/Modus/Seiten..
 
-$SEITE = new Seite::vonPfad($DSH_SPRACHE, $DSH_SEITENPFAD, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
+$SEITE = Seite::vonPfad($DSH_SPRACHE, $DSH_SEITENPFAD, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
 
 $SEITE[] = UI\Zeile::standard(new UI\Meldung("Gültige URL", "Die URL wurde folgendermaßen interpretiert: <b>".join("/", $WEBSITE_URL)."</b>", "Erfolg"));
 
