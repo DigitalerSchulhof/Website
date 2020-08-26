@@ -1,2 +1,3 @@
 seiten:
-  "/^(?!Schulhof).*$/": "website.php"
+  "Schulhof/Verwaltung/Sprachen"  : "verwaltung/sprachen.php"
+  "/^(?!Schulhof).*$/"            : "website.php"

@@ -1,0 +1,68 @@
+1:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Die <b>Kennung</b> ist ungültig.
+2:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Der <b>Name</b> ist ungültig.
+3:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Der <b>Name in Standardsprache</b> ist ungültig.
+4:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Die Bezeichnung für <b>Alt</b> ist ungültig.
+5:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Die Bezeichnung für <b>Aktuell</b> ist ungültig.
+6:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Die Bezeichnung für <b>Neu</b> ist ungültig.
+7:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Die Bezeichnung für <b>Sehen</b> ist ungültig.
+8:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Die Bezeichnung für <b>Bearbeiten</b> ist ungültig.
+9:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Die Bezeichnung für <b>Fehler</b> ist ungültig.
+10:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Die Bezeichnung für <b>Startseite</b> ist ungültig.
+11:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Die <b>Kennung</b> ist bereits vergeben.
+12:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Der <b>Name</b> ist bereits vergeben.
+13:
+  ort:
+    - anfragen/verwaltung/sprachen/neuspeichern.php
+    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
+  beschreibung: Der <b>Name in Standardsprache</b> ist bereits vergeben.
+14:
+  ort: anfragen/verwaltung/sprachen/loeschen.php
+  beschreibung: Die <b>letzte Sprache kann nicht gelöscht werden.
