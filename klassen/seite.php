@@ -86,7 +86,12 @@ class Seite extends Kern\Seite {
 
     // Seite ist gültig
     // $seitenId hält die ID der Seite
-    
+
+
+
+
+
+    return new Seite(join("/", $pfad));
   }
 }
 

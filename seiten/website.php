@@ -70,7 +70,7 @@ $standardversion = 1;
 
 $url = $DSH_URL;
 
-if($url[0] === "Website") {
+if($url[0] === "Website" || $url[0] === "") {
   array_shift($url);
 }
 
@@ -123,7 +123,7 @@ if(count($url) > 0) {
   }
 } else {
   // keine Seite
-  $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STANDARDSPRACHE, $versionen[$DSH_STANDARDSPRACHE][$standardversion], $modi[$DSH_STANDARDSPRACHE][$standardmodus]], [$startseite[$DSH_STANDARDSPRACHE]]);
+  $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STANDARDSPRACHE, $versionen[$DSH_STANDARDSPRACHE][$standardversion], $modi[$DSH_STANDARDSPRACHE][$standardmodus], $startseite[$DSH_STANDARDSPRACHE]]);
 }
 // Ab hier ist $WEBSITE_URL eine gültige Seite, OHNE Website/ vorne dran
 

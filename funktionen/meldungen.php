@@ -6,8 +6,9 @@ switch ($meldeid) {
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;
   case 1:
+    parameter("id");
     Anfrage::setRueck("Meldung", new UI\Meldung("Sprache bearbeiten", "Die Sprache wurde bearbeitet.", "Erfolg"));
-    $knoepfe = [UI\Knopf::ok("dshVerwaltungSpracheBearbeiten")];
+    $knoepfe = [UI\Knopf::ok("dshVerwaltungSpracheBearbeiten$id")];
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;
   case 2:
