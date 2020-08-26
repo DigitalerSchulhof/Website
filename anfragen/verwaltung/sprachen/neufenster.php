@@ -13,8 +13,7 @@ include_once __DIR__."/_details.php";
 
 $spalte[] = spracheDetails(null);
 
-$code = new UI\Fenster("dshVerwaltungSpracheNeu", "Neue Sprache anlegen", new UI\Zeile($spalte), true, true);
-$code->addFensteraktion(UI\Knopf::schliessen("dshVerwaltungSpracheNeu"));
+$code = new UI\Fenster("dshVerwaltungSpracheNeu", "Neue Sprache anlegen", new UI\Zeile($spalte));
 
 Anfrage::setRueck("Code", (string) $code);
 ?>
