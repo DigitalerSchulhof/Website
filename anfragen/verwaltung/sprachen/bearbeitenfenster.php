@@ -17,13 +17,7 @@ if(!$DBS->existiert("website_sprachen", "id = ?", "i", $id)) {
   Anfrage::addFehler(-3, true);
 }
 
-$spalte   = new UI\Spalte("A1", new UI\SeitenUeberschrift("Sprache bearbeiten"));
-
 include_once __DIR__."/_details.php";
 
-$spalte[] = spracheDetails($id);
-
-$code = new UI\Fenster("dshVerwaltungSpracheBearbeiten", "Sprache bearbeiten", new UI\Zeile($spalte));
-
-Anfrage::setRueck("Code", (string) $code);
+Anfrage::setRueck("Code", (string) spracheDetails($id));
 ?>

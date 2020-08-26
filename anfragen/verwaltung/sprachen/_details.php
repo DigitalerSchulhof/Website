@@ -1,17 +1,21 @@
 <?php
 /**
- * Gibt die Details einer Sprache aus
+ * Gibt ein Fenster mit den Details einer Sprache zurück
  * @param  int|null $id Die ID der zu ladenden Sprache
- * @return string
+ * @return UI\Fenster
  */
-function spracheDetails($id = null) : string {
-  $formular         = new UI\FormularTabelle();
-
+function spracheDetails($id = null) : UI\Fenster {
   if($id === null) {
-    $idpre = "dshVerwaltungSpracheNeu";
+    $idpre    = "dshVerwaltungSpracheNeu";
+    $fenstertitel = "Neue Sprache anlegen";
+    $spalte   = new UI\Spalte("A1", new UI\SeitenUeberschrift("Neue Sprache anlegen"));
   } else {
-    $idpre = "dshVerwaltungSpracheBearbeiten$id";
+    $idpre    = "dshVerwaltungSpracheBearbeiten$id";
+    $fenstertitel = "Sprache bearbeiten";
+    $spalte   = new UI\Spalte("A1", new UI\SeitenUeberschrift("Sprache bearbeiten"));
   }
+
+  $formular     = new UI\FormularTabelle();
 
   $a2           = "";
   $name         = "";
@@ -50,7 +54,11 @@ function spracheDetails($id = null) : string {
     $formular[] = (new UI\Knopf("Änderungen speichern", "Erfolg"))          ->setSubmit(true);
     $formular   ->addSubmit("website.verwaltung.sprachen.bearbeiten.speichern($id)");
   }
-  return (string) $formular;
+
+  $spalte[]   = $formular;
+  $fenster[]  = new UI\Zeile($spalte);
+
+  return new UI\Fenster($idpre, $fenstertitel, new UI\Zeile($spalte));
 }
 
 ?>
