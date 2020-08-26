@@ -22,12 +22,11 @@ function spracheDetails($id = null) : string {
   $sehen        = "";
   $bearbeiten   = "";
   $fehler       = "";
-  $startseite   = "";
 
   if($id !== null) {
     global $DBS;
-    $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {fehler}, {startseite} FROM website_sprachen WHERE id = ?", "i", $id)
-          ->werte($a2, $name, $namestandard, $alt, $aktuell, $neu, $sehen, $bearbeiten, $fehler, $startseite);
+    $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {fehler} FROM website_sprachen WHERE id = ?", "i", $id)
+          ->werte($a2, $name, $namestandard, $alt, $aktuell, $neu, $sehen, $bearbeiten, $fehler);
   }
 
 
@@ -43,16 +42,13 @@ function spracheDetails($id = null) : string {
   $formular[] = new UI\FormularFeld(new UI\InhaltElement("Sehen:"),                   (new UI\Textfeld("{$idpre}Sehen"))        ->setWert($sehen));
   $formular[] = new UI\FormularFeld(new UI\InhaltElement("Bearbeiten:"),              (new UI\Textfeld("{$idpre}Bearbeiten"))   ->setWert($bearbeiten));
   $formular[] = new UI\FormularFeld(new UI\InhaltElement("Fehler:"),                  (new UI\Textfeld("{$idpre}Fehler"))       ->setWert($fehler));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Startseite:"),              (new UI\Textfeld("{$idpre}Startseite"))   ->setWert($startseite));
 
   if($id === null) {
     $formular[] = (new UI\Knopf("Neue Sprache anlegen", "Erfolg"))          ->setSubmit(true);
     $formular   ->addSubmit("website.verwaltung.sprachen.neu.speichern()");
-    $formular[] = (new UI\Knopf("Abbrechen", "Fehler"))                     ->addFunktion("onclick", "ui.fenster.schliessen('dshVerwaltungSpracheNeu')");
   } else {
     $formular[] = (new UI\Knopf("Änderungen speichern", "Erfolg"))          ->setSubmit(true);
     $formular   ->addSubmit("website.verwaltung.sprachen.bearbeiten.speichern($id)");
-    $formular[] = (new UI\Knopf("Abbrechen", "Fehler"))                     ->addFunktion("onclick", "ui.fenster.schliessen('dshVerwaltungSpracheBearbeiten')");
   }
   return (string) $formular;
 }

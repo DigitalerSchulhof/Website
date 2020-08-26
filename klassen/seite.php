@@ -46,7 +46,7 @@ class Seite extends Kern\Seite {
   }
 
   public static function vonPfad($sprache, $pfad, $version, $modus) : Seite {
-    var_dump($sprache, $pfad, $version, $modus);
+
   }
 }
 

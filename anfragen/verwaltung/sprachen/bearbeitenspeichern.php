@@ -1,5 +1,5 @@
 <?php
-Anfrage::post("id", "a2", "name", "namestandard", "alt", "aktuell", "neu", "sehen", "bearbeiten", "fehler", "startseite");
+Anfrage::post("id", "a2", "name", "namestandard", "alt", "aktuell", "neu", "sehen", "bearbeiten", "fehler");
 
 if(!Kern\Check::angemeldet()) {
   Anfrage::addFehler(-2, true);
@@ -45,20 +45,16 @@ if(!UI\Check::istText($fehler)) {
   Anfrage::addFehler(9);
 }
 
-if(!UI\Check::istText($startseite)) {
+if($DBS->existiert("website_sprachen", "a2 = [?] AND id != ?", "si", $a2, $id)) {
   Anfrage::addFehler(10);
 }
 
-if($DBS->existiert("website_sprachen", "a2 = [?] AND id != ?", "si", $a2, $id)) {
+if($DBS->existiert("website_sprachen", "name = [?] AND id != ?", "si", $name, $id)) {
   Anfrage::addFehler(11);
 }
 
-if($DBS->existiert("website_sprachen", "name = [?] AND id != ?", "si", $name, $id)) {
-  Anfrage::addFehler(12);
-}
-
 if($DBS->existiert("website_sprachen", "namestandard = [?] AND id != ?", "si", $namestandard, $id)) {
-  Anfrage::addFehler(13);
+  Anfrage::addFehler(12);
 }
 
 Anfrage::checkFehler();
@@ -69,7 +65,7 @@ if (!$DSH_BENUTZER->hatRecht("website.sprachen.bearbeiten")) {
 }
 
 $id = $DBS->datensatzBearbeiten("website_sprachen", $id,
-  array("a2" => "[?]", "name" => "[?]", "namestandard" => "[?]", "alt" => "[?]", "aktuell" => "[?]", "neu" => "[?]", "sehen" => "[?]", "bearbeiten" => "[?]", "fehler" => "[?]", "startseite" => "[?]"),
-  "ssssssssss", $a2, $name, $namestandard, $alt, $aktuell, $neu, $sehen, $bearbeiten, $fehler, $startseite);
+  array("a2" => "[?]", "name" => "[?]", "namestandard" => "[?]", "alt" => "[?]", "aktuell" => "[?]", "neu" => "[?]", "sehen" => "[?]", "bearbeiten" => "[?]", "fehler" => "[?]"),
+  "sssssssss", $a2, $name, $namestandard, $alt, $aktuell, $neu, $sehen, $bearbeiten, $fehler);
 
 ?>

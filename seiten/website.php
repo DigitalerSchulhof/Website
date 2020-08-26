@@ -45,7 +45,7 @@ $modi         = [];
 $fehler       = [];
 $startseite   = [];
 
-$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {fehler}, {startseite} FROM website_sprachen");
+$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {fehler}, (SELECT {pfad} FROM website_seitendaten as wsd JOIN website_seiten as wse ON wse.id = wsd.seite WHERE wse.art = 0 AND wsd.sprache = wsp.id) FROM website_sprachen as wsp");
 while($anf->werte($a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeiten, $f, $s)) {
   $name       = str_replace(" ", "_", $name);
   $namestd    = str_replace(" ", "_", $namestd);

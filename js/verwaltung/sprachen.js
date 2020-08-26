@@ -10,7 +10,6 @@ website.verwaltung.sprachen = {
     sehen:        $("#"+id+"Sehen").getWert(),
     bearbeiten:   $("#"+id+"Bearbeiten").getWert(),
     fehler:       $("#"+id+"Fehler").getWert(),
-    startseite:   $("#"+id+"Startseite").getWert()
   }),
   neu: {
     fenster:    () => ui.fenster.laden("Website", 1, null),

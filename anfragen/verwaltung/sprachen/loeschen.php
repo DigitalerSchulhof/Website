@@ -10,7 +10,7 @@ if(!UI\Check::istZahl($id) || !$DBS->existiert("website_sprachen", "id = ?", "i"
 }
 
 if(!$DBS->existiert("website_sprachen", "id != ?", "i", $id)) {
-  Anfrage::addFehler(14, true);
+  Anfrage::addFehler(13, true);
 }
 
 if (!$DSH_BENUTZER->hatRecht("website.sprachen.löschen")) {

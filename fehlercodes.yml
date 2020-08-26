@@ -47,22 +47,17 @@
   ort:
     - anfragen/verwaltung/sprachen/neuspeichern.php
     - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
-  beschreibung: Die Bezeichnung für <b>Startseite</b> ist ungültig.
+  beschreibung: Die <b>Kennung</b> ist bereits vergeben.
 11:
   ort:
     - anfragen/verwaltung/sprachen/neuspeichern.php
     - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
-  beschreibung: Die <b>Kennung</b> ist bereits vergeben.
+  beschreibung: Der <b>Name</b> ist bereits vergeben.
 12:
   ort:
     - anfragen/verwaltung/sprachen/neuspeichern.php
     - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
-  beschreibung: Der <b>Name</b> ist bereits vergeben.
-13:
-  ort:
-    - anfragen/verwaltung/sprachen/neuspeichern.php
-    - anfragen/verwaltung/sprachen/bearbeitenspeichern.php
   beschreibung: Der <b>Name in Standardsprache</b> ist bereits vergeben.
-14:
+13:
   ort: anfragen/verwaltung/sprachen/loeschen.php
   beschreibung: Die <b>letzte Sprache kann nicht gelöscht werden.
