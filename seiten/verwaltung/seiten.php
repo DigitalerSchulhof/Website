@@ -6,6 +6,7 @@ $spalte = new UI\Spalte("A1", new UI\SeitenUeberschrift("Seiten"));
 $tabelle = new UI\Tabelle("dshVerwaltungSeiten", "website.verwaltung.seiten.suchen", new UI\Icon(Website\Icons::SEITE), "Bezeichnung", "Pfad", "Status");
 $tabelle ->setAutoladen(true);
 
+$spalte[] = new UI\Meldung("Sprachabhängig", "Seitenbezeichnungen und -pfade sind von der ausgewählten Sprache abhängig.", "Information");
 $spalte[] = $tabelle;
 
 $sprachwahl = new Website\Sprachwahl("dshVerwaltungSeitenSprachwahl");

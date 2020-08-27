@@ -61,3 +61,18 @@
 13:
   ort: anfragen/verwaltung/sprachen/loeschen.php
   beschreibung: Die <b>letzte Sprache kann nicht gelöscht werden.
+14:
+  ort:
+    - anfragen/verwaltung/seiten/neuspeichern.php
+    - anfragen/verwaltung/seiten/bearbeitenspeichern.php
+  beschreibung: Eine <b>Bezeichnung</b> ist ungültig.
+15:
+  ort:
+    - anfragen/verwaltung/seiten/neuspeichern.php
+    - anfragen/verwaltung/seiten/bearbeitenspeichern.php
+  beschreibung: Ein <b>Pfadabschnitt</b> ist ungültig.
+16:
+  ort:
+    - anfragen/verwaltung/seiten/neuspeichern.php
+    - anfragen/verwaltung/seiten/bearbeitenspeichern.php
+  beschreibung: Es existiert bereits eine weitere Seite mit diesem <b>Pfadabschnitt</b> und derselben übergeordneten Seite.

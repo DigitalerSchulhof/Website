@@ -1,25 +1,39 @@
 website.verwaltung.seiten = {
-  suchen: sort => core.ajax("Website", 7, null, {...sort}),
-  daten: (id) => ({
-    bezeichnung:  $("#"+id+"Bezeichnung").getWert(),
-    pfad:         $("#"+id+"Pfad").getWert(),
-    status:       $("#"+id+"Status").getWert(),
-  }),
+  suchen: sort => {
+    let sprache = $("#dshVerwaltungSeitenSprachwahl").getWert();
+    return core.ajax("Website", 7, null, {sprache: sprache, ...sort});
+  },
+  daten: (id) => {
+    let r = {
+      art:            $("#"+id+"Art").getWert(),
+      status:         $("#"+id+"Status").getWert(),
+    };
+    r.sprachen = {};
+    let sprachen = $("#"+id+"Sprachen").getWert().split(";");
+    for(let s of sprachen) {
+      r.sprachen[s] = {
+        bezeichnung:  $("#"+id+"Bezeichnung"+s).getWert(),
+        pfad:         $("#"+id+"Pfad"+s).getWert(),
+      };
+    }
+    return r;
+  },
   neu: {
-    fenster:    () => ui.fenster.laden("Website", 8, null),
-    speichern:  () => core.ajax("Website", 9, "Sprache anlegen", {...website.verwaltung.seiten.daten("dshVerwaltungSpracheNeu")}, 5, "dshVerwaltungSprachen")
+    // »id« ist hier die übergeordnete Seite um den Bezug nicht zu verlieren
+    fenster:    id => ui.fenster.laden("Website", 8, null, {id: (id || null)}),
+    speichern:  id => core.ajax("Website", 9, "Seite anlegen", {id: (id || null), ...website.verwaltung.seiten.daten("dshVerwaltungSeiteNeu")}, 6, "dshVerwaltungSeiten")
   },
   bearbeiten: {
     fenster:    id => ui.fenster.laden("Website", 10, null, {id: id}),
-    speichern:  id => core.ajax("Website", 11, "Sprache bearbeiten", {id: id, ...website.verwaltung.seiten.daten("dshVerwaltungSpracheBearbeiten"+id)}, null, "dshVerwaltungSprachen")
+    speichern:  id => core.ajax("Website", 11, "Seite bearbeiten", {id: id, ...website.verwaltung.seiten.daten("dshVerwaltungSeiteBearbeiten"+id)}, null, "dshVerwaltungSeiten")
                             .then(() => ui.laden.meldung("Website", 7, null, {id: id})),
   },
   loeschen: {
-    fragen:     id => ui.laden.meldung("Website", 8, "Sprache löschen", {id: id}),
-    ausfuehren: id => core.ajax("Website", 12, null, {id: id}, 9, "dshVerwaltungSprachen")
+    fragen:     id => ui.laden.meldung("Website", 8, "Seite löschen", {id: id}),
+    ausfuehren: id => core.ajax("Website", 12, null, {id: id}, 9, "dshVerwaltungSeiten")
   },
   standardsprache: {
     fragen:     id => ui.laden.meldung("Website", 10, "Standardsprache festlegen", {id: id}),
-    ausfuehren: id => core.ajax("Website", 13, null, {id: id}, 11, "dshVerwaltungSprachen")
+    ausfuehren: id => core.ajax("Website", 13, null, {id: id}, 11, "dshVerwaltungSeiten")
   }
 };
