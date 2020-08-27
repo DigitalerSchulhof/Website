@@ -17,7 +17,7 @@ $ta = new Kern\Tabellenanfrage($sql, $spalten, $sortSeite, $sortDatenproseite, $
 $tanfrage = $ta->anfrage($DBS);
 $anfrage = $tanfrage["Anfrage"];
 
-$tabelle = new UI\Tabelle("dshVerwaltungSprachen", "website.verwaltung.sprachen.suchen", new UI\Icon("fas fa-language"), "Kennung", "Bezeichnung");
+$tabelle = new UI\Tabelle("dshVerwaltungSprachen", "website.verwaltung.sprachen.suchen", new UI\Icon(Website\Icons::SPRACHE), "Kennung", "Bezeichnung");
 $tabelle->setSeiten($tanfrage);
 
 while($anfrage->werte($id, $a2, $bezeichnung, $istStandard)) {

@@ -1,9 +1,9 @@
 <?php
-$SEITE = new Kern\Seite("Sprachen", "website.sprachen.sehen");
+$SEITE = new Kern\Seite("Seiten", "website.seiten.sehen");
 
-$spalte = new UI\Spalte("A1", new UI\SeitenUeberschrift("Sprachen"));
+$spalte = new UI\Spalte("A1", new UI\SeitenUeberschrift("Seiten"));
 
-$tabelle = new UI\Tabelle("dshVerwaltungSprachen", "website.verwaltung.sprachen.suchen", new UI\Icon(Website\Icons::SPRACHE), "Kennung", "Bezeichnung");
+$tabelle = new UI\Tabelle("dshVerwaltungSeiten", "website.verwaltung.seiten.suchen", new UI\Icon(Website\Icons::SPRACHE), "Kennung", "Bezeichnung");
 $tabelle ->setAutoladen(true);
 
 $spalte[] = $tabelle;

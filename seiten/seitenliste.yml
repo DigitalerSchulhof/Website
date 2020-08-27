@@ -1,3 +1,4 @@
 seiten:
   "Schulhof/Verwaltung/Sprachen"  : "verwaltung/sprachen.php"
+  "Schulhof/Verwaltung/Seiten"    : "verwaltung/seiten.php"
   "/^(?!Schulhof).*$/"            : "website.php"

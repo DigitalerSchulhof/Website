@@ -5,3 +5,9 @@ website:
     bearbeiten: Sprachen bearbeiten
     löschen: Sprachen löschen
     standardsprache: Standardsprache festlegen
+  seiten:
+    sehen: Seitenübersicht sehen
+    anlegen: Seiten anlegen
+    bearbeiten: Seiten bearbeiten
+    löschen: Seiten löschen
+    startseite: Startseite festlegen
