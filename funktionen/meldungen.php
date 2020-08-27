@@ -31,5 +31,36 @@ switch ($meldeid) {
   case 5:
     Anfrage::setRueck("Meldung", new UI\Meldung("Zur Standardsprache machen", "Die Sprache wurde zur Standardsprache gemacht.", "Erfolg"));
     break;
+  case 6:
+    Anfrage::setRueck("Meldung", new UI\Meldung("Seite anlegen", "Die Seite wurde angelegt.", "Erfolg"));
+    $knoepfe = [UI\Knopf::ok("dshVerwaltungSeiteNeu")];
+    Anfrage::setRueck("Knöpfe", $knoepfe);
+    break;
+  case 7:
+    parameter("id");
+    Anfrage::setRueck("Meldung", new UI\Meldung("Seite bearbeiten", "Die Seite wurde bearbeitet.", "Erfolg"));
+    $knoepfe = [UI\Knopf::ok("dshVerwaltungSeiteBearbeiten$id")];
+    Anfrage::setRueck("Knöpfe", $knoepfe);
+    break;
+  case 8:
+    parameter("id");
+    Anfrage::setRueck("Meldung", new UI\Meldung("Seite löschen", "Soll die Seite wirklich gelöscht werden? Dadurch gehen <b>alle</b> Inhalte, welche mit dieser Seite verbunden sind, unwiederruflich verloren!", "Warnung"));
+    $knoepfe[] = new UI\Knopf("Seite löschen", "Fehler", "website.verwaltung.seite.loeschen.ausfuehren($id)");
+    $knoepfe[] = UI\Knopf::abbrechen();
+    Anfrage::setRueck("Knöpfe", $knoepfe);
+    break;
+  case 9:
+    Anfrage::setRueck("Meldung", new UI\Meldung("Seite löschen", "Die Seite wurde gelöscht.", "Erfolg"));
+    break;
+  case 10:
+    parameter("id");
+    Anfrage::setRueck("Meldung", new UI\Meldung("Zur Startseite machen", "Soll die Seite wirklich zur Startseite gemacht werden?", "Warnung"));
+    $knoepfe[] = new UI\Knopf("Zur Startseite machen", "Erfolg", "website.verwaltung.seiten.startseite.ausfuehren($id)");
+    $knoepfe[] = UI\Knopf::abbrechen();
+    Anfrage::setRueck("Knöpfe", $knoepfe);
+    break;
+  case 11:
+    Anfrage::setRueck("Meldung", new UI\Meldung("Zur Startseite machen", "Die Sprache wurde zur Startseite gemacht.", "Erfolg"));
+    break;
 }
 ?>
