@@ -13,7 +13,7 @@ if (!$DSH_BENUTZER->hatRecht("website.sprachen.bearbeiten")) {
   Anfrage::addFehler(-4, true);
 }
 
-if(!$DBS->existiert("website_sprachen", "id = ?", "i", $id)) {
+if(!$DBS->existiert("website_sprachen", $id)) {
   Anfrage::addFehler(-3, true);
 }
 

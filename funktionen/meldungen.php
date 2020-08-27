@@ -44,8 +44,8 @@ switch ($meldeid) {
     break;
   case 8:
     parameter("id");
-    Anfrage::setRueck("Meldung", new UI\Meldung("Seite löschen", "Soll die Seite wirklich gelöscht werden? Dadurch gehen <b>alle</b> Inhalte, welche mit dieser Seite verbunden sind, unwiederruflich verloren!", "Warnung"));
-    $knoepfe[] = new UI\Knopf("Seite löschen", "Fehler", "website.verwaltung.seite.loeschen.ausfuehren($id)");
+    Anfrage::setRueck("Meldung", new UI\Meldung("Seite löschen", "Soll die Seite wirklich gelöscht werden? Dadurch gehen <b>alle</b> Inhalte, welche mit dieser Seite verbunden sind, sowie <b>alle</b> Unterseiten dieser Seite unwiederruflich verloren!", "Warnung"));
+    $knoepfe[] = new UI\Knopf("Seite löschen", "Fehler", "website.verwaltung.seiten.loeschen.ausfuehren($id)");
     $knoepfe[] = UI\Knopf::abbrechen();
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;

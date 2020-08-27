@@ -9,7 +9,7 @@ if (!$DSH_BENUTZER->hatRecht("website.sprachen.sehen")) {
   Anfrage::addFehler(-4, true);
 }
 
-$spalten = [["id"], ["{a2} as a2"], ["CONCAT({name}, ' (', {namestandard}, ')') as bezeichnung"], ["IF((SELECT wert FROM website_einstellungen WHERE inhalt = ['Standardsprache']) = a2, '1', '0')"]];
+$spalten = [["id"], ["{a2} as a2"], ["IF(namestandard = [''], {name}, CONCAT({name}, ' (', {namestandard}, ')')) as bezeichnung"], ["IF((SELECT wert FROM website_einstellungen WHERE inhalt = ['Standardsprache']) = a2, '1', '0')"]];
 
 $sql = "SELECT ?? FROM website_sprachen";
 

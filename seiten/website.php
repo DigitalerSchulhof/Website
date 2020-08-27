@@ -35,7 +35,7 @@ use UI;
  */
 
 // Global machen
-global $versionen, $modi, $startseite, $standardversion, $standardmodus, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS, $DSH_SEITENPFAD;
+global $versionen, $modi, $startseite, $standardversion, $standardmodus, $DSH_STANDARDSPRACHE, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS, $DSH_SEITENPFAD;
 
 $DSH_STANDARDSPRACHE = \Kern\Einstellungen::laden("Website", "Standardsprache");
 
@@ -44,7 +44,7 @@ $versionen    = [];
 $modi         = [];
 $startseite   = [];
 
-$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, (SELECT {pfad} FROM website_seitendaten as wsd JOIN website_seiten as wse ON wse.id = wsd.seite WHERE wse.art = 0 AND wsd.sprache = wsp.id) FROM website_sprachen as wsp");
+$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, (SELECT {pfad} FROM website_seitendaten as wsd JOIN website_seiten as wse ON wse.id = wsd.seite WHERE wse.art = 's' AND wsd.sprache = wsp.id) FROM website_sprachen as wsp");
 while($anf->werte($a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeiten, $s)) {
   $name       = str_replace(" ", "_", $name);
   $namestd    = str_replace(" ", "_", $namestd);
@@ -134,5 +134,7 @@ $url = $WEBSITE_URL;
 $DSH_SEITENPFAD     = array_splice($url, 3);
 
 // Website/Sprache/Version/Modus/Seiten..
-$SEITE = Seite::vonPfad($DSH_SPRACHE, $DSH_SEITENPFAD, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
+$SEITE   = Seite::vonPfad($DSH_SPRACHE, $DSH_SEITENPFAD, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
+
+$SEITE[] = UI\Zeile::standard(new Sprachwahl("dshWebsiteSprache"));
 ?>

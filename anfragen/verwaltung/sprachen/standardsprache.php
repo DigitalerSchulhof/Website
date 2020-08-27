@@ -5,7 +5,7 @@ if(!Kern\Check::angemeldet()) {
   Anfrage::addFehler(-2, true);
 }
 
-if(!UI\Check::istZahl($id) || !$DBS->existiert("website_sprachen", "id = ?", "i", $id)) {
+if(!UI\Check::istZahl($id) || !$DBS->existiert("website_sprachen", $id)) {
   Anfrage::addFehler(-3, true);
 }
 
@@ -14,5 +14,5 @@ if (!$DSH_BENUTZER->hatRecht("website.sprachen.standardsprache")) {
 }
 
 $DBS->anfrage("UPDATE website_einstellungen SET wert = (SELECT a2 FROM website_sprachen WHERE id = ? LIMIT 1) WHERE inhalt = ['Standardsprache']", "i", $id);
-
+$DBS->anfrage("UPDATE website_sprachen SET namestandard = [''] WHERE id = ?", "i", $id);
 ?>

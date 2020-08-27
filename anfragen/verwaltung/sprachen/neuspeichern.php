@@ -13,7 +13,7 @@ if(!UI\Check::istText($name)) {
   Anfrage::addFehler(2);
 }
 
-if(!UI\Check::istText($namestandard)) {
+if(!UI\Check::istText($namestandard, 0)) {
   Anfrage::addFehler(3);
 }
 

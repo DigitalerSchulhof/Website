@@ -34,18 +34,18 @@ function spracheDetails($id = null) : UI\Fenster {
   }
 
 
-  $formular[] = new UI\Formularfeld(new UI\Ueberschrift("3", "Namen:"));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Kennung (Alpha-2):"),       (new UI\Textfeld("{$idpre}A2"))           ->setWert($a2));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Name:"),                    (new UI\Textfeld("{$idpre}Name"))         ->setWert($name));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Name (Standardsprache):"),  (new UI\Textfeld("{$idpre}NameStandard")) ->setWert($namestandard));
+  $formular[] =  new UI\Formularfeld(new UI\Ueberschrift("3", "Namen:"));
+  $formular[] =  new UI\FormularFeld(new UI\InhaltElement("Kennung (Alpha-2):"),       (new UI\Textfeld("{$idpre}A2"))           ->setWert($a2));
+  $formular[] =  new UI\FormularFeld(new UI\InhaltElement("Name:"),                    (new UI\Textfeld("{$idpre}Name"))         ->setWert($name));
+  $formular[] = (new UI\FormularFeld(new UI\InhaltElement("Name (Standardsprache):"),  (new UI\Textfeld("{$idpre}NameStandard")) ->setWert($namestandard)))->setOptional(true);
 
-  $formular[] = new UI\Formularfeld(new UI\Ueberschrift("3", "Übersetzungen:"));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Alt:"),                     (new UI\Textfeld("{$idpre}Alt"))          ->setWert($alt));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Aktuell:"),                 (new UI\Textfeld("{$idpre}Aktuell"))      ->setWert($aktuell));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Neu:"),                     (new UI\Textfeld("{$idpre}Neu"))          ->setWert($neu));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Sehen:"),                   (new UI\Textfeld("{$idpre}Sehen"))        ->setWert($sehen));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Bearbeiten:"),              (new UI\Textfeld("{$idpre}Bearbeiten"))   ->setWert($bearbeiten));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Fehler:"),                  (new UI\Textfeld("{$idpre}Fehler"))       ->setWert($fehler));
+  $formular[] =  new UI\Formularfeld(new UI\Ueberschrift("3", "Übersetzungen:"));
+  $formular[] =  new UI\FormularFeld(new UI\InhaltElement("Alt:"),                     (new UI\Textfeld("{$idpre}Alt"))          ->setWert($alt));
+  $formular[] =  new UI\FormularFeld(new UI\InhaltElement("Aktuell:"),                 (new UI\Textfeld("{$idpre}Aktuell"))      ->setWert($aktuell));
+  $formular[] =  new UI\FormularFeld(new UI\InhaltElement("Neu:"),                     (new UI\Textfeld("{$idpre}Neu"))          ->setWert($neu));
+  $formular[] =  new UI\FormularFeld(new UI\InhaltElement("Sehen:"),                   (new UI\Textfeld("{$idpre}Sehen"))        ->setWert($sehen));
+  $formular[] =  new UI\FormularFeld(new UI\InhaltElement("Bearbeiten:"),              (new UI\Textfeld("{$idpre}Bearbeiten"))   ->setWert($bearbeiten));
+  $formular[] =  new UI\FormularFeld(new UI\InhaltElement("Fehler:"),                  (new UI\Textfeld("{$idpre}Fehler"))       ->setWert($fehler));
 
   if($id === null) {
     $formular[] = (new UI\Knopf("Neue Sprache anlegen", "Erfolg"))          ->setSubmit(true);

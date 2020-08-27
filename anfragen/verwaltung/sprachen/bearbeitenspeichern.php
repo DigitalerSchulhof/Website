@@ -5,7 +5,7 @@ if(!Kern\Check::angemeldet()) {
   Anfrage::addFehler(-2, true);
 }
 
-if(!UI\Check::istZahl($id) || !$DBS->existiert("website_sprachen", "id = ?", "i", $id)) {
+if(!UI\Check::istZahl($id) || !$DBS->existiert("website_sprachen", $id)) {
   Anfrage::addFehler(-3, true);
 }
 
@@ -17,7 +17,7 @@ if(!UI\Check::istText($name)) {
   Anfrage::addFehler(2);
 }
 
-if(!UI\Check::istText($namestandard)) {
+if(!UI\Check::istText($namestandard, 0)) {
   Anfrage::addFehler(3);
 }
 
