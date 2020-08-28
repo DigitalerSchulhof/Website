@@ -70,4 +70,6 @@ foreach($sprachen as $s => $w) {
   }
 }
 $DBS->anfrage("INSERT INTO website_seitendaten (seite, sprache, bezeichnung, pfad) VALUES (?, (SELECT id FROM website_sprachen WHERE a2 = [?]), [?], [?])", "isss", $daten);
+$DBS->anfrage("UPDATE website_seitendaten SET bezeichnung = NULL WHERE bezeichnung = ['']");
+$DBS->anfrage("UPDATE website_seitendaten SET pfad = NULL WHERE pfad = ['']");
 ?>

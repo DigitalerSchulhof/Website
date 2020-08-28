@@ -14,9 +14,9 @@ if (!$DSH_BENUTZER->hatRecht("website.seiten.sehen")) {
   Anfrage::addFehler(-4, true);
 }
 
-$spalten = [["ws.id as id"], ["ws.art as art"], ["{wsd.bezeichnung} as bezeichnung"], ["ws.status as status"], ["{wsd.pfad} as pfad"], ["IF(ws.zugehoerig IS NULL, '0', '1')"], ["ws.startseite"]];
+$spalten = [["ws.id as id"], ["ws.art as art"], ["ws.status as status"], ["{(SELECT IF(wsd.bezeichnung IS NULL, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung))} as bezeichnung"], ["wsd.bezeichnung IS NULL as bezeichnungIstStandard"], ["{(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))} as pfad"], ["wsd.pfad IS NULL as pfadIstStandard"], ["ws.startseite as startseite"]];
 
-$sql = "SELECT ?? FROM website_seiten as ws JOIN website_seitendaten as wsd ON wsd.seite = ws.id WHERE wsd.sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])";
+$sql = "SELECT ?? FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.a2 = [?]";
 
 $ta = new Kern\Tabellenanfrage($sql, $spalten, $sortSeite, $sortDatenproseite, $sortSpalte, $sortRichtung);
 $tanfrage = $ta->anfrage($DBS, "s", $sprache);
@@ -25,16 +25,20 @@ $anfrage = $tanfrage["Anfrage"];
 $tabelle = new UI\Tabelle("dshVerwaltungSeiten", "website.verwaltung.seiten.suchen", new UI\Icon(Website\Icons::SEITE), "Bezeichnung", "Pfad", "Status");
 $tabelle->setSeiten($tanfrage);
 
-while($anfrage->werte($id, $art, $bezeichnung, $status, $pfad, $hatZugehoerig, $istStartseite)) {
+while($anfrage->werte($id, $art, $status, $bezeichnung, $bezeichnungIstStandard, $pfad, $pfadIstStandard, $istStartseite)) {
   $zeile = new UI\Tabelle\Zeile($id);
 
   // Einrückung & Pfad bestimmen
   $einrueckung = 0;
   $pfadpre     = "";
   $zug = $id;
-  while($DBS->anfrage("SELECT ws.id, {wsd.pfad} FROM website_seiten as ws JOIN website_seitendaten as wsd ON wsd.seite = ws.id WHERE id = (SELECT zugehoerig FROM website_seiten WHERE id = ?) AND wsd.sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])", "is", $zug, $sprache)->werte($zid, $p)) {
+  while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))}, wsd.pfad IS NULL FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.a2 = [?] AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "si", $sprache, $zug)->werte($zid, $p, $pIstStandard)) {
     $zug      = $zid;
-    $pfadpre .= "$p/";
+    if($pIstStandard) {
+      $pfadpre .= "<i>$p</i>/";
+    } else {
+      $pfadpre .= "$p/";
+    }
     $einrueckung++;
   }
   if($einrueckung > 0) {
@@ -42,9 +46,16 @@ while($anfrage->werte($id, $art, $bezeichnung, $status, $pfad, $hatZugehoerig, $
   } else {
     $einrueckung = "<span>";
   }
-  $zeile["Bezeichnung"] = "$einrueckung$bezeichnung</span>";
-
-  $zeile["Pfad"]        = "/$pfadpre$pfad";
+  if($bezeichnungIstStandard) {
+    $zeile["Bezeichnung"] = "$einrueckung<i>$bezeichnung</i></span>";
+  } else {
+    $zeile["Bezeichnung"] = "$einrueckung$bezeichnung</span>";
+  }
+  if($pfadIstStandard) {
+    $zeile["Pfad"]        = "/$pfadpre<i>$pfad</i>";
+  } else {
+    $zeile["Pfad"]        = "/$pfadpre$pfad";
+  }
 
   switch($status) {
     case "i":

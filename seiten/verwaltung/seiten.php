@@ -6,10 +6,11 @@ $spalte = new UI\Spalte("A1", new UI\SeitenUeberschrift("Seiten"));
 $tabelle = new UI\Tabelle("dshVerwaltungSeiten", "website.verwaltung.seiten.suchen", new UI\Icon(Website\Icons::SEITE), "Bezeichnung", "Pfad", "Status");
 $tabelle ->setAutoladen(true);
 
-$spalte[] = new UI\Meldung("Sprachabhängig", "Seitenbezeichnungen und -pfade sind von der ausgewählten Sprache abhängig.", "Information");
+$spalte[] = new UI\Meldung("Sprachabhängig", "Seitenbezeichnungen und -pfade sind von der ausgewählten Sprache abhängig.<br><i>Kursive</i> Einträge stammen von der Standardsprache.", "Information");
 $spalte[] = $tabelle;
 
-$sprachwahl = new Website\Sprachwahl("dshVerwaltungSeitenSprachwahl", null, "ui.tabelle.sortieren('dshVerwaltungSeiten')");
+global $DSH_STANDARDSPRACHE;
+$sprachwahl = new Website\Sprachwahl("dshVerwaltungSeitenSprachwahl", $DSH_STANDARDSPRACHE, "ui.tabelle.sortieren('dshVerwaltungSeiten')");
 
 $knoepfe = [$sprachwahl];
 
