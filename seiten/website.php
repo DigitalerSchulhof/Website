@@ -1,6 +1,5 @@
 <?php
 namespace Website;
-use UI;
 
 /*
 
@@ -136,6 +135,4 @@ $DSH_SEITENPFAD     = array_splice($url, 3);
 
 // Website/Sprache/Version/Modus/Seiten..
 $SEITE   = Seite::vonPfad($DSH_SPRACHE, $DSH_SEITENPFAD, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
-
-$SEITE[] = UI\Zeile::standard(new Sprachwahl("dshWebsiteSprache", $DSH_SPRACHE, "website.seite.aendern.sprache()"));
 ?>

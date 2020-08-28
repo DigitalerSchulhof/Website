@@ -9,8 +9,18 @@ $tabelle ->setAutoladen(true);
 $spalte[] = new UI\Meldung("Sprachabhängig", "Seitenbezeichnungen und -pfade sind von der ausgewählten Sprache abhängig.<br><i>Kursive</i> Einträge stammen von der Standardsprache.", "Information");
 $spalte[] = $tabelle;
 
-global $DSH_STANDARDSPRACHE;
-$sprachwahl = new Website\Sprachwahl("dshVerwaltungSeitenSprachwahl", $DSH_STANDARDSPRACHE, "ui.tabelle.sortieren('dshVerwaltungSeiten')");
+$standard   = Kern\Einstellungen::laden("Website", "Standardsprache");
+$sprachwahl = new UI\Auswahl("dshVerwaltungSeitenSprachwahl", $standard);
+$sprachwahl ->setTitel("Anzeigesprache");
+$sprachwahl ->addFunktion("oninput", "ui.tabelle.sortieren('dshVerwaltungSeiten')");
+
+$anf = $DBS->anfrage("SELECT {a2}, IF(namestandard = [''], {name}, CONCAT({name}, ' (', {namestandard}, ')')) as bezeichnung FROM website_sprachen");
+while($anf->werte($a2, $bez)) {
+  $sprachwahl->add($bez, $a2, $standard == $a2);
+}
+$sprachwahl->addKlasse("dshUiEingabefeldKlein");
+$sprachwahl->setStyle("float", "right");
+
 
 $knoepfe = [$sprachwahl];
 
