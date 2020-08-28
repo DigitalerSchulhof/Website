@@ -44,7 +44,8 @@ $versionen    = [];
 $modi         = [];
 $startseite   = [];
 
-$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, (SELECT {pfad} FROM website_seitendaten as wsd JOIN website_seiten as wse ON wse.id = wsd.seite WHERE wse.art = 's' AND wsd.sprache = wsp.id) FROM website_sprachen as wsp");
+// Startseite nimmt, wenn vorhanden den Pfad der Sprache, ansonsten Fallback der Standardsprache
+$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE  wsds.seite = wsd.seite AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad) FROM website_seitendaten as wsd WHERE wsd.sprache = wsp.id AND wsd.seite = (SELECT id FROM website_seiten WHERE startseite = 1))} FROM website_sprachen as wsp");
 while($anf->werte($a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeiten, $s)) {
   $name       = str_replace(" ", "_", $name);
   $namestd    = str_replace(" ", "_", $namestd);
@@ -60,7 +61,6 @@ while($anf->werte($a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeite
   $modi         [$a2] = [$sehen, $bearbeiten];
   $startseite   [$a2] =  $s;
 }
-
 $WEBSITE_URL = [];
 
 $standardmodus = 0;
@@ -69,7 +69,6 @@ $standardversion = 1;
 // Website/Sprache/Version/Modus/Seiten..
 
 $url = $DSH_URL;
-
 if($url[0] === "Website" || $url[0] === "") {
   array_shift($url);
 }
@@ -125,6 +124,7 @@ if(count($url) > 0) {
   // keine Seite
   $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STANDARDSPRACHE, $versionen[$DSH_STANDARDSPRACHE][$standardversion], $modi[$DSH_STANDARDSPRACHE][$standardmodus], $startseite[$DSH_STANDARDSPRACHE]]);
 }
+
 // Ab hier ist $WEBSITE_URL eine gültige Seite, OHNE Website/ vorne dran
 
 $DSH_SPRACHE        = $WEBSITE_URL[0];                                          // Sprachkürzel
@@ -136,5 +136,5 @@ $DSH_SEITENPFAD     = array_splice($url, 3);
 // Website/Sprache/Version/Modus/Seiten..
 $SEITE   = Seite::vonPfad($DSH_SPRACHE, $DSH_SEITENPFAD, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
 
-$SEITE[] = UI\Zeile::standard(new Sprachwahl("dshWebsiteSprache"));
+$SEITE[] = UI\Zeile::standard(new Sprachwahl("dshWebsiteSprache", $DSH_SPRACHE, "website.seite.aendern.sprache()"));
 ?>

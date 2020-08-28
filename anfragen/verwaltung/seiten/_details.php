@@ -43,7 +43,7 @@ function seiteDetails($id = null, $zugehoerig = null) : UI\Fenster {
   $formular[] = new UI\FormularFeld(new UI\InhaltElement("Status:"),                  $statuswahl);
 
 
-  $DBS->anfrage("SELECT ws.id, {ws.a2}, {ws.name} FROM website_sprachen as ws JOIN website_einstellungen as we ON we.wert = ws.a2 WHERE we.inhalt = ['Standardsprache']")
+  $DBS->anfrage("SELECT ws.id, {ws.a2}, {ws.name} FROM website_sprachen as ws JOIN website_einstellungen as we ON we.wert = ws.a2 WHERE we.id = 0")
         ->werte($standardid, $a2, $standardsprache);
 
   $bezeichnung  = "";

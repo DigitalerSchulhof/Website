@@ -88,10 +88,7 @@ class Seite extends Kern\Seite {
     // $seitenId hält die ID der Seite
 
 
-
-
-
-    return new Seite(join("/", $pfad));
+    return (new Seite(join("/", $pfad)))->addZeile(\UI\Zeile::standard(new \UI\InhaltElement($seitenId)));
   }
 }
 

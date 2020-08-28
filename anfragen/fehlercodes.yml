@@ -76,3 +76,12 @@
     - anfragen/verwaltung/seiten/neuspeichern.php
     - anfragen/verwaltung/seiten/bearbeitenspeichern.php
   beschreibung: Es existiert bereits eine weitere Seite mit diesem <b>Pfadabschnitt</b> und derselben übergeordneten Seite.
+17:
+  ort: anfrage/verwaltung/seiten/bearbeitenspeichern.php
+  beschreibung: Die Startseite darf nicht <b>inaktiv</b> und muss eine <b>Seite mit Inhalt</b> sein.
+18:
+  ort: anfrage/verwaltung/seiten/loeschen.php
+  beschreibung: Die Startseite kann nicht <b>gelöscht</b> werden. Zuvor muss eine andere Seite zur Startseite gemacht werden.
+19:
+  ort: anfrage/verwaltung/seiten/setzen/status.php
+  beschreibung: Die Startseite darf nicht <b>inaktiv</b> sein.

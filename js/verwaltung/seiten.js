@@ -32,8 +32,11 @@ website.verwaltung.seiten = {
     fragen:     id => ui.laden.meldung("Website", 8, "Seite löschen", {id: id}),
     ausfuehren: id => core.ajax("Website", 12, null, {id: id}, 9, "dshVerwaltungSeiten")
   },
-  standardsprache: {
-    fragen:     id => ui.laden.meldung("Website", 10, "Standardsprache festlegen", {id: id}),
+  startseite: {
+    fragen:     id => ui.laden.meldung("Website", 10, "Zur Startseite machen", {id: id}),
     ausfuehren: id => core.ajax("Website", 13, null, {id: id}, 11, "dshVerwaltungSeiten")
+  },
+  setzen: {
+    status:     (id, status)  => core.ajax("Website", 14, null, {id: id, status: status}, null, "dshVerwaltungSeiten")
   }
 };

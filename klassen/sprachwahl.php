@@ -3,7 +3,7 @@ namespace Website;
 use UI;
 
 class Sprachwahl extends UI\Auswahl {
-  public function __construct($id, $wert = null) {
+  public function __construct($id, $wert = null, $aktion = null) {
     global $DBS;
     if($wert === null) {
       $wert = \Kern\Einstellungen::laden("Website", "Standardsprache");
@@ -15,6 +15,9 @@ class Sprachwahl extends UI\Auswahl {
     }
     $this->addKlasse("dshUiEingabefeldKlein");
     $this->setStyle("float", "right");
+    if($aktion !== null) {
+      $this->addFunktion("oninput", $aktion);
+    }
   }
 
   public function add($text, $wert, $selected = false) {

@@ -19,7 +19,7 @@ if (!$DSH_BENUTZER->hatRecht("website.sprachen.löschen")) {
 
 $DBS->datensatzLoeschen("website_sprachen", $id);
 // Standardsprache ändern
-if($DBS->existiert("website_sprachen", "a2 = (SELECT wert FROM website_einstellungen WHERE inhalt = ['Standardsprache'])")) {
-  $DBS->anfrage("UPDATE website_einstellungen SET wert = (SELECT a2 FROM website_sprachen LIMIT 1) WHERE inhalt = ['Standardsprache']");
+if($DBS->existiert("website_sprachen", "a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)")) {
+  $DBS->anfrage("UPDATE website_einstellungen SET wert = (SELECT a2 FROM website_sprachen LIMIT 1) WHERE id = 0");
 }
 ?>

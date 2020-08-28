@@ -9,8 +9,7 @@ $tabelle ->setAutoladen(true);
 $spalte[] = new UI\Meldung("Sprachabhängig", "Seitenbezeichnungen und -pfade sind von der ausgewählten Sprache abhängig.", "Information");
 $spalte[] = $tabelle;
 
-$sprachwahl = new Website\Sprachwahl("dshVerwaltungSeitenSprachwahl");
-$sprachwahl ->addFunktion("oninput", "ui.tabelle.sortieren('dshVerwaltungSeiten')");
+$sprachwahl = new Website\Sprachwahl("dshVerwaltungSeitenSprachwahl", null, "ui.tabelle.sortieren('dshVerwaltungSeiten')");
 
 $knoepfe = [$sprachwahl];
 

@@ -13,6 +13,6 @@ if (!$DSH_BENUTZER->hatRecht("website.sprachen.standardsprache")) {
   Anfrage::addFehler(-4, true);
 }
 
-$DBS->anfrage("UPDATE website_einstellungen SET wert = (SELECT a2 FROM website_sprachen WHERE id = ? LIMIT 1) WHERE inhalt = ['Standardsprache']", "i", $id);
+$DBS->anfrage("UPDATE website_einstellungen SET wert = (SELECT a2 FROM website_sprachen WHERE id = ? LIMIT 1) WHERE id = 0", "i", $id);
 $DBS->anfrage("UPDATE website_sprachen SET namestandard = [''] WHERE id = ?", "i", $id);
 ?>
