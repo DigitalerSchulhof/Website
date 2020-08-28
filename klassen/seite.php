@@ -66,19 +66,25 @@ class Seite extends Kern\Seite {
       return $seite;
     }
 
+
     $seitenId = null;
     $pfadTrav = $pfad;
     while(count($pfadTrav) > 0) {
       $seg = array_shift($pfadTrav);
 
       if($seitenId === null) {
-        $DBS->anfrage("SELECT id FROM website_seiten as ws JOIN website_seitendaten as wsd ON ws.id = wsd.seite WHERE wsd.pfad = [?] AND ws.zugehoerig IS NULL AND wsd.sprache = ? LIMIT 1", "si", $seg, $sprachenId)
-              ->werte($seitenId);
+        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig IS NULL AND wsp.id = ? AND IF(wsd.pfad IS NULL, {(SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)))} = ?, wsd.pfad = [?])", "iss", $sprachenId, $seg, $seg)->werte($seitenId)) {
+          $seitenId = null;
+          break;
+        }
       } else {
-        $DBS->anfrage("SELECT id FROM website_seiten as ws JOIN website_seitendaten as wsd ON ws.id = wsd.seite WHERE wsd.pfad = [?] AND ws.zugehoerig = ? AND wsd.sprache = ? LIMIT 1", "sii", $seg, $seitenId, $sprachenId)
-              ->werte($seitenId);
+        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig = ? AND wsp.id = ? AND IF(wsd.pfad IS NULL, {(SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)))} = ?, wsd.pfad = [?])", "iiss", $seitenId, $sprachenId, $seg, $seg)->werte($seitenId)) {
+          $seitenId = null;
+          break;
+        }
       }
     }
+
     if($seitenId === null) {
       // Seite nicht gefunden
       return self::vonPfad($sprache, [$fehler, "404"], 1, 0);

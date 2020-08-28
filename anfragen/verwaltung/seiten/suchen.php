@@ -35,9 +35,9 @@ while($anfrage->werte($id, $art, $status, $bezeichnung, $bezeichnungIstStandard,
   while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))}, wsd.pfad IS NULL FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.a2 = [?] AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "si", $sprache, $zug)->werte($zid, $p, $pIstStandard)) {
     $zug      = $zid;
     if($pIstStandard) {
-      $pfadpre .= "<i>$p</i>/";
+      $pfadpre = "<i>$p</i>/$pfadpre";
     } else {
-      $pfadpre .= "$p/";
+      $pfadpre = "$p/$pfadpre";
     }
     $einrueckung++;
   }
