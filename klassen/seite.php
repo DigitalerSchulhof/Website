@@ -18,7 +18,7 @@ class Seite extends Kern\Seite {
   }
 
   public function __toString() : string {
-    global $DBS, $WEBSITE_URL, $versionen, $modi, $startseite, $WEBSITE_URL, $DSH_STANDARDSPRACHE, $DSH_SEITENPFAD, $standardversion, $standardmodus, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS;
+    global $DBS, $DSH_URL, $WEBSITE_URL, $versionen, $modi, $startseite, $WEBSITE_URL, $DSH_STANDARDSPRACHE, $DSH_SEITENPFAD, $standardversion, $standardmodus, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS;
     $code = "";
 
     // Brotkrumen
@@ -49,6 +49,8 @@ class Seite extends Kern\Seite {
           $pfad .= "$seg/";
         }
       }
+
+      $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
     } else {
       // Kein Fehler -> Brotkrumen aus Bezeichnungen + Pfaden generieren, Titel aus Bezeichnung
       $zug = $this->seitenId;
@@ -76,16 +78,84 @@ class Seite extends Kern\Seite {
             $klammer = " (".join(", ", $extra).")";
           }
 
+          $this->titel = $bez;
+
           $brotkrumen = array_merge($brotkrumen, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$DSH_SEITENVERSION]}/{$modi[$DSH_SPRACHE][$DSH_SEITENMODUS]}/$pfad$pf" => "$bez$klammer"));
         } else {
           $brotkrumen = array_merge($brotkrumen, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$DSH_SEITENVERSION]}/{$modi[$DSH_SPRACHE][$DSH_SEITENMODUS]}/$pfad$pf" => $bez));
           $pfad .= "$pf/";
         }
       }
-      $this->titel = "HI";
+
+      // Sprachwahl mit Pfaden
+      $sprachwahl = new \UI\Auswahl("dshWebsiteSprache", $DSH_SPRACHE);
+      $sprachwahl ->addFunktion("oninput", "website.seite.aendern.sprache()");
+
+      $anf = $DBS->anfrage("SELECT {a2}, IF(namestandard = [''], {name}, CONCAT({name}, ' (', {namestandard}, ')')), id as bezeichnung FROM website_sprachen");
+
+      // Versionsfeld
+      switch($DSH_SEITENVERSION) {
+        case 0:
+          $vf = "alt";
+          break;
+        case 1:
+          $vf = "aktuell";
+          break;
+        case 2:
+          $vf = "neu";
+          break;
+      }
+
+      // Modusfeld
+      switch($DSH_SEITENMODUS) {
+        case 0:
+          $mf = "sehen";
+          break;
+        case 1:
+          $mf = "bearbeiten";
+          break;
+      }
+
+
+      while($anf->werte($a2, $bez, $sprachId)) {
+        $url = "";
+        $zug = $this->seitenId;
+        // Pfad für die Sprache bestimmen
+        while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "ii", $sprachId, $zug)->werte($zid, $u)) {
+          $zug      = $zid;
+          $url  = "$u/$url";
+        }
+        // Letze Bezeichnung bestimmen
+        $DBS->anfrage("SELECT {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = ?", "ii", $sprachId, $this->seitenId)
+              ->werte($u);
+        $url .= $u;
+        $infos = [];
+        if($a2 != $DSH_STANDARDSPRACHE || count($DSH_URL) != count($DSH_SEITENPFAD) + 1) {
+          $infos[] = $a2;
+        }
+        if(count($DSH_URL) > count($DSH_SEITENPFAD) + 1) {
+          $DBS->anfrage("SELECT {{$vf}} FROM website_sprachen WHERE id = ?", "i", $sprachId)
+                ->werte($v);
+          $infos[] = $v;
+        }
+        if(count($DSH_URL) > count($DSH_SEITENPFAD) + 2) {
+          $DBS->anfrage("SELECT {{$mf}} FROM website_sprachen WHERE id = ?", "i", $sprachId)
+                ->werte($v);
+          $infos[] = $v;
+        }
+        $infos = join("/", $infos);
+        if(strlen($infos) > 0) {
+          $infos .= "/";
+        }
+        $sprachwahl->add($bez, "$infos$url", $DSH_SPRACHE == $a2);
+      }
+      $sprachwahl->addKlasse("dshUiEingabefeldKlein");
+      $sprachwahl->setStyle("float", "right");
+
+      $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
+      $code .= \UI\Zeile::standard($sprachwahl);
     }
 
-    $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
     foreach ($this->zeilen as $z) {
       $code .= $z;
     }
@@ -136,81 +206,8 @@ class Seite extends Kern\Seite {
     }
 
     // Seite ist gültig
-    // $seitenId hält die ID der Seite
 
-    $seite    = new Seite($seitenId);
-    $seite[]  = \UI\Zeile::standard(new \UI\InhaltElement($seitenId));
-
-
-    // Sprachwahl mit Pfaden
-    $sprachwahl = new \UI\Auswahl("dshWebsiteSprache", $DSH_SPRACHE);
-    $sprachwahl ->addFunktion("oninput", "website.seite.aendern.sprache()");
-
-    $anf = $DBS->anfrage("SELECT {a2}, IF(namestandard = [''], {name}, CONCAT({name}, ' (', {namestandard}, ')')), id as bezeichnung FROM website_sprachen");
-
-    // Versionsfeld
-    switch($version) {
-      case 0:
-        $vf = "alt";
-        break;
-      case 1:
-        $vf = "aktuell";
-        break;
-      case 2:
-        $vf = "neu";
-        break;
-    }
-
-    // Modusfeld
-    switch($modus) {
-      case 0:
-        $mf = "sehen";
-        break;
-      case 1:
-        $mf = "bearbeiten";
-        break;
-    }
-
-
-    while($anf->werte($a2, $bez, $sprachId)) {
-      $url = "";
-      $zug = $seitenId;
-      // Pfad für die Sprache bestimmen
-      while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "ii", $sprachId, $zug)->werte($zid, $u)) {
-        $zug      = $zid;
-        $url  = "$u/$url";
-      }
-      // Letze Bezeichnung bestimmen
-      $DBS->anfrage("SELECT {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = ?", "ii", $sprachId, $seitenId)
-            ->werte($u);
-      $url .= $u;
-
-      $infos = [];
-      if($a2 != $DSH_STANDARDSPRACHE || count($DSH_URL) != count($pfad) + 1) {
-        $infos[] = $a2;
-      }
-      if(count($DSH_URL) > count($pfad) + 1) {
-        $DBS->anfrage("SELECT {{$vf}} FROM website_sprachen WHERE id = ?", "i", $sprachId)
-              ->werte($v);
-        $infos[] = $v;
-      }
-      if(count($DSH_URL) > count($pfad) + 2) {
-        $DBS->anfrage("SELECT {{$mf}} FROM website_sprachen WHERE id = ?", "i", $sprachId)
-              ->werte($v);
-        $infos[] = $v;
-      }
-      $infos = join("/", $infos);
-      if(strlen($infos) > 0) {
-        $infos .= "/";
-      }
-      $sprachwahl->add($bez, "$infos$url", $DSH_SPRACHE == $a2);
-    }
-    $sprachwahl->addKlasse("dshUiEingabefeldKlein");
-    $sprachwahl->setStyle("float", "right");
-
-    $seite[] = \UI\Zeile::standard($sprachwahl);
-
-    return $seite;
+    return new Seite($seitenId);
   }
 }
 
