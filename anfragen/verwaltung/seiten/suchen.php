@@ -79,7 +79,7 @@ while($anfrage->werte($id, $art, $status, $bezeichnung, $bezeichnungIstStandard,
     $zeile->setIcon(new UI\Icon("fas fa-home"));
   }
 
-  if(!$istStartseite && $art == "i" && $status == "a" && $DSH_BENUTZER->hatRecht("website.seiten.startseite")) {
+  if(!$istStartseite && $art == "i" && $status == "a" && $pfadpre == "" && $DSH_BENUTZER->hatRecht("website.seiten.startseite")) {
     $knopf = new UI\MiniIconKnopf(new UI\Icon("fas fa-home"), "Zur Startseite machen", "Erfolg");
     $knopf ->addFunktion("onclick", "website.verwaltung.seiten.startseite.fragen($id)");
     $zeile ->addAktion($knopf);

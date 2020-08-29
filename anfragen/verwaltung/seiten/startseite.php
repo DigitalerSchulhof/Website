@@ -5,7 +5,7 @@ if(!Kern\Check::angemeldet()) {
   Anfrage::addFehler(-2, true);
 }
 
-if(!UI\Check::istZahl($id) || !$DBS->existiert("website_seiten", "id = ? AND art = 'i' AND status = 'a'", "i", $id)) {
+if(!UI\Check::istZahl($id) || !$DBS->existiert("website_seiten", "id = ? AND art = 'i' AND status = 'a' AND zugehoerig IS NULL", "i", $id)) {
   Anfrage::addFehler(-3, true);
 }
 

@@ -34,7 +34,7 @@ namespace Website;
  */
 
 // Global machen
-global $versionen, $modi, $startseite, $standardversion, $standardmodus, $DSH_STANDARDSPRACHE, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS, $DSH_SEITENPFAD;
+global $versionen, $modi, $startseite, $standardversion, $standardmodus, $DSH_STANDARDSPRACHE, $WEBSITE_URL, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS, $DSH_SEITENPFAD;
 
 $DSH_STANDARDSPRACHE = \Kern\Einstellungen::laden("Website", "Standardsprache");
 
@@ -71,7 +71,6 @@ $url = $DSH_URL;
 if($url[0] === "Website" || $url[0] === "") {
   array_shift($url);
 }
-
 if(count($url) > 0) {
   if(in_array($url[0], array_keys($DSH_SPRACHEN))) {
     // Sprache gegeben
@@ -84,7 +83,7 @@ if(count($url) > 0) {
           if(in_array($url[2], $modi[$WEBSITE_URL[0]])) {
             // Modus gegeben
             $WEBSITE_URL[2] = $url[2];
-            if(count($url) > 4) {
+            if(count($url) > 3) {
               // Seite gegeben
 
               // Sprache, Version, Modus, Seite
@@ -123,7 +122,6 @@ if(count($url) > 0) {
   // keine Seite
   $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STANDARDSPRACHE, $versionen[$DSH_STANDARDSPRACHE][$standardversion], $modi[$DSH_STANDARDSPRACHE][$standardmodus], $startseite[$DSH_STANDARDSPRACHE]]);
 }
-
 
 // Ab hier ist $WEBSITE_URL eine gültige Seite, OHNE Website/ vorne dran
 
