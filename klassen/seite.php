@@ -51,6 +51,7 @@ class Seite extends Kern\Seite {
       }
 
       $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
+      return $code.$this->codedanach;
     } else {
       // Kein Fehler -> Brotkrumen aus Bezeichnungen + Pfaden generieren, Titel aus Bezeichnung
       $zug = $this->seitenId;
@@ -61,17 +62,19 @@ class Seite extends Kern\Seite {
 
       $pfadBez = array_reverse($pfadBez);
       $pfad = "";
+      $ver = array_search($DSH_SEITENVERSION, ["alt", "aktuell", "neu"]);
+      $mod = array_search($DSH_SEITENMODUS, ["sehen", "beatbeiten"]);
       foreach($pfadBez as $i => $seg) {
         $pf   = $seg[0];
         $bez  = $seg[1];
         if($i === count($pfadBez)-1) {
           // Letzte Seite
           $extra = [];
-          if($DSH_SEITENVERSION !== $standardversion) {
-            $extra[] = $versionen[$DSH_SPRACHE][$DSH_SEITENVERSION];
+          if($ver !== $standardversion) {
+            $extra[] = $versionen[$DSH_SPRACHE][$ver];
           }
-          if($DSH_SEITENMODUS !== $standardmodus) {
-            $extra[] = $modi[$DSH_SPRACHE][$DSH_SEITENMODUS];
+          if($mod !== $standardmodus) {
+            $extra[] = $modi[$DSH_SPRACHE][$mod];
           }
           $klammer = "";
           if(count($extra) > 0) {
@@ -80,9 +83,9 @@ class Seite extends Kern\Seite {
 
           $this->titel = $bez;
 
-          $brotkrumen = array_merge($brotkrumen, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$DSH_SEITENVERSION]}/{$modi[$DSH_SPRACHE][$DSH_SEITENMODUS]}/$pfad$pf" => "$bez$klammer"));
+          $brotkrumen = array_merge($brotkrumen, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$pf" => "$bez$klammer"));
         } else {
-          $brotkrumen = array_merge($brotkrumen, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$DSH_SEITENVERSION]}/{$modi[$DSH_SPRACHE][$DSH_SEITENMODUS]}/$pfad$pf" => $bez));
+          $brotkrumen = array_merge($brotkrumen, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$pf" => $bez));
           $pfad .= "$pf/";
         }
       }
@@ -92,30 +95,6 @@ class Seite extends Kern\Seite {
       $sprachwahl ->addFunktion("oninput", "website.seite.aendern.sprache()");
 
       $anf = $DBS->anfrage("SELECT {a2}, IF(namestandard = [''], {name}, CONCAT({name}, ' (', {namestandard}, ')')), id as bezeichnung FROM website_sprachen");
-
-      // Versionsfeld
-      switch($DSH_SEITENVERSION) {
-        case 0:
-          $vf = "alt";
-          break;
-        case 1:
-          $vf = "aktuell";
-          break;
-        case 2:
-          $vf = "neu";
-          break;
-      }
-
-      // Modusfeld
-      switch($DSH_SEITENMODUS) {
-        case 0:
-          $mf = "sehen";
-          break;
-        case 1:
-          $mf = "bearbeiten";
-          break;
-      }
-
 
       while($anf->werte($a2, $bez, $sprachId)) {
         $url = "";
@@ -134,12 +113,12 @@ class Seite extends Kern\Seite {
           $infos[] = $a2;
         }
         if(count($DSH_URL) > count($DSH_SEITENPFAD) + 1) {
-          $DBS->anfrage("SELECT {{$vf}} FROM website_sprachen WHERE id = ?", "i", $sprachId)
+          $DBS->anfrage("SELECT {{$DSH_SEITENVERSION}} FROM website_sprachen WHERE id = ?", "i", $sprachId)
                 ->werte($v);
           $infos[] = $v;
         }
         if(count($DSH_URL) > count($DSH_SEITENPFAD) + 2) {
-          $DBS->anfrage("SELECT {{$mf}} FROM website_sprachen WHERE id = ?", "i", $sprachId)
+          $DBS->anfrage("SELECT {{$DSH_SEITENMODUS}} FROM website_sprachen WHERE id = ?", "i", $sprachId)
                 ->werte($v);
           $infos[] = $v;
         }
@@ -153,17 +132,33 @@ class Seite extends Kern\Seite {
       $sprachwahl->setStyle("float", "right");
 
       $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
-      $code .= \UI\Zeile::standard($sprachwahl);
     }
 
-    foreach ($this->zeilen as $z) {
-      $code .= $z;
+    $elemente = array(
+      "editoren" => "editor"
+    );
+
+    $sql = [];
+    $werte = [];
+    foreach($elemente as $t => $f) {
+      $sql[] = "SELECT we.id as id, we.position as position, IF(wei.$DSH_SEITENVERSION IS NULL, (SELECT weii.$DSH_SEITENVERSION FROM website_{$t}inhalte as weii WHERE weii.$f = we.id AND weii.sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wei.$DSH_SEITENVERSION) as inhalt FROM website_$t as we JOIN website_sprachen as ws LEFT JOIN website_{$t}inhalte as wei ON wei.sprache = ws.id AND wei.$f = we.id WHERE ws.a2 = [?] AND we.seite = ?";
+      $werte[] = $DSH_SPRACHE;
+      $werte[] = $this->seitenId;
     }
+    $sqlS = join("UNION", $sql);
+
+    $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("si", count($sql)), $werte);
+
+    while($inhalte->werte($id, $position, $inhalt)) {
+      $code .= $inhalt;
+    }
+
+    $code .= \UI\Zeile::standard($sprachwahl);
     return $code.$this->codedanach;
   }
 
   public static function vonPfad($sprache, $pfad, $version, $modus) : \Kern\Seite {
-    global $DBS, $DSH_URL, $DSH_STANDARDSPRACHE, $versionen, $modi, $startseite, $standardversion, $standardmodus, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS, $DSH_SEITENPFAD;
+    global $DBS;
 
     // Pfad auflösen
     $DBS->anfrage("SELECT id, {fehler} FROM website_sprachen WHERE a2 = [?]", "s", $sprache)

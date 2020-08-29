@@ -126,8 +126,12 @@ if(count($url) > 0) {
 // Ab hier ist $WEBSITE_URL eine gültige Seite, OHNE Website/ vorne dran
 
 $DSH_SPRACHE        = $WEBSITE_URL[0];                                          // Sprachkürzel
-$DSH_SEITENVERSION  = array_search($WEBSITE_URL[1], $versionen[$DSH_SPRACHE]);  // 0 => Alt     1 => Aktuell  2 => Neu
-$DSH_SEITENMODUS    = array_search($WEBSITE_URL[2], $modi[$DSH_SPRACHE]);       // 0 => Sehen   1 => Bearbeiten
+$DSH_SEITENVERSION  = array_search($WEBSITE_URL[1], $versionen[$DSH_SPRACHE]);
+$DSH_SEITENMODUS    = array_search($WEBSITE_URL[2], $modi[$DSH_SPRACHE]);
+
+$DSH_SEITENVERSION  = ["alt", "aktuell", "neu"][$DSH_SEITENVERSION];
+$DSH_SEITENMODUS    = ["sehen", "beatbeiten"][$DSH_SEITENMODUS];
+
 $url = $WEBSITE_URL;
 $DSH_SEITENPFAD     = array_splice($url, 3);
 
