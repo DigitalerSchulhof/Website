@@ -85,3 +85,6 @@
 19:
   ort: anfrage/verwaltung/seiten/setzen/status.php
   beschreibung: Die Startseite darf nicht <b>inaktiv</b> sein.
+20:
+  ort: funktionen/website/editor.php
+  beschreibung: Der <b>Inhalt</b> ist ungültig.

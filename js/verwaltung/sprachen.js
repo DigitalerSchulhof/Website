@@ -1,6 +1,6 @@
 website.verwaltung.sprachen = {
   suchen: sort => core.ajax("Website", 0, null, {...sort}),
-  daten: (id) => ({
+  daten: id => ({
     a2:           $("#"+id+"A2").getWert(),
     name:         $("#"+id+"Name").getWert(),
     namestandard: $("#"+id+"NameStandard").getWert(),

@@ -86,7 +86,6 @@ function seiteDetails($id = null, $zugehoerig = null) : UI\Fenster {
 
   $spalte[]   = $formular;
   $spalte[]   = new UI\VerstecktesFeld("{$idpre}Sprachen", join(";", $sprachen));
-  $fenster[]  = new UI\Zeile($spalte);
 
   return new UI\Fenster($idpre, $fenstertitel, new UI\Zeile($spalte));
 }

@@ -56,7 +56,6 @@ function spracheDetails($id = null) : UI\Fenster {
   }
 
   $spalte[]   = $formular;
-  $fenster[]  = new UI\Zeile($spalte);
 
   return new UI\Fenster($idpre, $fenstertitel, new UI\Zeile($spalte));
 }

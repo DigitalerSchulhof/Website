@@ -149,5 +149,5 @@ $url = $WEBSITE_URL;
 $DSH_SEITENPFAD     = array_splice($url, 3);
 
 // Website/Sprache/Version/Modus/Seiten..
-$SEITE   = Seite::vonPfad($DSH_SPRACHE, $DSH_SEITENPFAD, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
+$SEITE = Seite::vonPfad($DSH_SPRACHE, $DSH_SEITENPFAD, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
 ?>

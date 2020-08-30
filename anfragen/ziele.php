@@ -14,4 +14,8 @@ $ZIELE[11] = "verwaltung/seiten/bearbeitenspeichern.php";
 $ZIELE[12] = "verwaltung/seiten/loeschen.php";
 $ZIELE[13] = "verwaltung/seiten/startseite.php";
 $ZIELE[14] = "verwaltung/seiten/setzen/status.php";
+$ZIELE[15] = "elemente/neufenster.php";
+$ZIELE[16] = "elemente/neuspeichern.php";
+$ZIELE[17] = "elemente/bearbeitenfenster.php";
+$ZIELE[18] = "elemente/bearbeitenspeichern.php";
 ?>

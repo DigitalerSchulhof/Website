@@ -62,5 +62,11 @@ switch ($meldeid) {
   case 11:
     Anfrage::setRueck("Meldung", new UI\Meldung("Zur Startseite machen", "Die Sprache wurde zur Startseite gemacht.", "Erfolg"));
     break;
+  case 12:
+    parameter("element", "id");
+    Anfrage::setRueck("Meldung", new UI\Meldung("Element bearbeiten", "Das Element wurde bearbeitet.", "Erfolg"));
+    $knoepfe = [(UI\Knopf::ok("dshWebsiteElementBearbeiten{$element}_$id"))->addFunktion("onclick", "core.neuladen()")];
+    Anfrage::setRueck("Knöpfe", $knoepfe);
+    break;
 }
 ?>
