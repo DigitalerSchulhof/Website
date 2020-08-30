@@ -1,0 +1,30 @@
+#dshWebsiteBearbeitenSpalte {
+  padding-bottom: 5px;
+}
+
+#dshWebsiteBearbeitenAktionen {
+  display: flex;
+}
+
+  #dshWebsiteBearbeitenAktionen>div {
+    flex-grow: 1;
+    text-align: center;
+  }
+  #dshWebsiteBearbeitenAktionen>div h3 {
+    margin-bottom: 5px;
+  }
+  #dshWebsiteBearbeitenAktionen>div .dshUiKnopf {
+    margin: 5px;
+  }
+
+.dshSeiteH #dshWebsiteBearbeitenAktionen {
+  flex-flow: column;
+}
+
+.dshSeiteH #dshWebsiteBearbeitenAktionen>div:not(:first-child){
+  margin-top: 10px;
+}
+
+.dshSeiteH #dshWebsiteBearbeitenAktionen>div .dshUiKnopf {
+  width: inherit;
+}

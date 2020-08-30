@@ -134,13 +134,13 @@ $DSH_SEITENVERSION  = ["alt", "aktuell", "neu"][$DSH_SEITENVERSION];
 $DSH_SEITENMODUS    = ["sehen", "bearbeiten"][$DSH_SEITENMODUS];
 
 if(in_array($DSH_SEITENVERSION, ["alt", "neu"])) {
-  if(!Check::angemeldet() || !$DSH_BENUTZER->hatRecht("website.inhalte.versionen.$DSH_SEITENVERSION")) {
+  if(!Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.versionen.$DSH_SEITENVERSION.sehen")) {
     \Seite::seiteAus("Fehler/403");
   }
 }
 
 if($DSH_SEITENMODUS == "bearbeiten") {
-  if(!Check::angemeldet() || !$DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
+  if(!Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
     \Seite::seiteAus("Fehler/403");
   }
 }
