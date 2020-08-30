@@ -1,5 +1,6 @@
 <?php
 namespace Website;
+use Kern\Check as Check;
 
 /*
 
@@ -130,7 +131,19 @@ $DSH_SEITENVERSION  = array_search($WEBSITE_URL[1], $versionen[$DSH_SPRACHE]);
 $DSH_SEITENMODUS    = array_search($WEBSITE_URL[2], $modi[$DSH_SPRACHE]);
 
 $DSH_SEITENVERSION  = ["alt", "aktuell", "neu"][$DSH_SEITENVERSION];
-$DSH_SEITENMODUS    = ["sehen", "beatbeiten"][$DSH_SEITENMODUS];
+$DSH_SEITENMODUS    = ["sehen", "bearbeiten"][$DSH_SEITENMODUS];
+
+if(in_array($DSH_SEITENVERSION, ["alt", "neu"])) {
+  if(!Check::angemeldet() || !$DSH_BENUTZER->hatRecht("website.inhalte.versionen.$DSH_SEITENVERSION")) {
+    \Seite::seiteAus("Fehler/403");
+  }
+}
+
+if($DSH_SEITENMODUS == "bearbeiten") {
+  if(!Check::angemeldet() || !$DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
+    \Seite::seiteAus("Fehler/403");
+  }
+}
 
 $url = $WEBSITE_URL;
 $DSH_SEITENPFAD     = array_splice($url, 3);

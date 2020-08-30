@@ -11,3 +11,11 @@ website:
     bearbeiten: Seiten bearbeiten
     löschen: Seiten löschen
     startseite: Startseite festlegen
+  inhalte:
+    versionen:
+      alt: Alte Version der Website sehen
+      neu: Neue Version der Website sehen
+    elemente:
+      anlegen: Elemente auf der Website anlegen
+      bearbeiten: Elemente auf der Website bearbeiten
+      löschen: Elemente auf der Website löschen
