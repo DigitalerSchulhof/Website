@@ -37,6 +37,6 @@ website.verwaltung.seiten = {
     ausfuehren: id => core.ajax("Website", 13, null, {id: id}, 11, "dshVerwaltungSeiten")
   },
   setzen: {
-    status:     (id, status)  => core.ajax("Website", 14, null, {id: id, status: status}, null, "dshVerwaltungSeiten")
+    status:     (id, status)  => core.ajax("Website", 14, "Status ändern", {id: id, status: status}, null, "dshVerwaltungSeiten")
   }
 };
