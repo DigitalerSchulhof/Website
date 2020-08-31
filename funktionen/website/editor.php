@@ -22,8 +22,12 @@ class Editor extends Element {
   public static function postValidieren() {
     global $inhalt;
     if(!UI\Check::istText($inhalt)) {
-      Anfrage::addFehler(20);
+      \Anfrage::addFehler(20);
     }
+  }
+
+  public function anzeigen() : bool {
+    return $this->inhalt !== null;
   }
 
   public function bearbeiten($idpre) : UI\Element {

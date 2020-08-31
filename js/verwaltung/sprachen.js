@@ -12,13 +12,13 @@ website.verwaltung.sprachen = {
     fehler:       $("#"+id+"Fehler").getWert(),
   }),
   neu: {
-    fenster:    () => ui.fenster.laden("Website", 1, null),
-    speichern:  () => core.ajax("Website", 2, "Sprache anlegen", {...website.verwaltung.sprachen.daten("dshVerwaltungSpracheNeu")}, 0, "dshVerwaltungSprachen")
+    fenster:    _ => ui.fenster.laden("Website", 1),
+    speichern:  _ => core.ajax("Website", 2, "Sprache anlegen", {...website.verwaltung.sprachen.daten("dshVerwaltungSpracheNeu")}, 0, "dshVerwaltungSprachen")
   },
   bearbeiten: {
-    fenster:    id => ui.fenster.laden("Website", 3, null, {id: id}),
+    fenster:    id => ui.fenster.laden("Website", 3, {id: id}),
     speichern:  id => core.ajax("Website", 4, "Sprache bearbeiten", {id: id, ...website.verwaltung.sprachen.daten("dshVerwaltungSpracheBearbeiten"+id)}, null, "dshVerwaltungSprachen")
-                            .then(() => ui.laden.meldung("Website", 1, null, {id: id})),
+                            .then(_ => ui.laden.meldung("Website", 1, null, {id: id})),
   },
   loeschen: {
     fragen:     id => ui.laden.meldung("Website", 2, "Sprache löschen", {id: id}),

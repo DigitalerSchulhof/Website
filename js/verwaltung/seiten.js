@@ -20,13 +20,13 @@ website.verwaltung.seiten = {
   },
   neu: {
     // »id« ist hier die übergeordnete Seite um den Bezug nicht zu verlieren
-    fenster:    id => ui.fenster.laden("Website", 8, null, {id: (id || null)}),
+    fenster:    id => ui.fenster.laden("Website", 8, {id: (id || null)}),
     speichern:  id => core.ajax("Website", 9, "Seite anlegen", {id: (id || null), ...website.verwaltung.seiten.daten("dshVerwaltungSeiteNeu")}, 6, "dshVerwaltungSeiten")
   },
   bearbeiten: {
-    fenster:    id => ui.fenster.laden("Website", 10, null, {id: id}),
+    fenster:    id => ui.fenster.laden("Website", 10, {id: id}),
     speichern:  id => core.ajax("Website", 11, "Seite bearbeiten", {id: id, ...website.verwaltung.seiten.daten("dshVerwaltungSeiteBearbeiten"+id)}, null, "dshVerwaltungSeiten")
-                            .then(() => ui.laden.meldung("Website", 7, null, {id: id})),
+                            .then(_ => ui.laden.meldung("Website", 7, null, {id: id})),
   },
   loeschen: {
     fragen:     id => ui.laden.meldung("Website", 8, "Seite löschen", {id: id}),
@@ -37,6 +37,11 @@ website.verwaltung.seiten = {
     ausfuehren: id => core.ajax("Website", 13, null, {id: id}, 11, "dshVerwaltungSeiten")
   },
   setzen: {
-    status:     (id, status)  => core.ajax("Website", 14, "Status ändern", {id: id, status: status}, null, "dshVerwaltungSeiten")
+    status:     (id, status)  => core.ajax("Website", 14, "Status ändern", {id: id, status: status}, null, "dshVerwaltungSeiten"),
+    version: {
+      fragen:     (id, version, sprache) => ui.laden.meldung("Website", 14, "Daten ändern", {id: id, version: version, sprache: sprache}),
+      ausfuehren: (id, version, sprache) => core.ajax("Website", 19, null, {id: id, version: version, sprache: sprache})
+                                                  .then(_ => ui.laden.meldung("Website", 15, null, {version: version}))
+    }
   }
 };

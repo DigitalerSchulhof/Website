@@ -1,9 +1,9 @@
 website.seite = {
   aendern: {
-    sprache: () => {
+    sprache: _ => {
       let seite = $("#dshWebsiteSprache").getWert();
       core.seiteLaden(seite);
-      let spracheFokus = () => {
+      let spracheFokus = _ => {
         $("#dshWebsiteSprache")[0].focus();
         window.removeEventListener("dshSeiteGeladen", spracheFokus);
       };

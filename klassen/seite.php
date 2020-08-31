@@ -65,8 +65,14 @@ class Seite extends Kern\Seite {
     // Kein Fehler -> Brotkrumen aus Bezeichnungen + Pfaden generieren, Titel aus Bezeichnung
 
     if(Kern\Check::angemeldet() && $DSH_BENUTZER->hatRecht("website.inhalte.versionen.[|alt,neu].[|sehen,aktivieren] || website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
+      $DBS->anfrage("SELECT status FROM website_seiten WHERE id = ?", "i", $this->seitenId)
+            ->werte($status);
+
       // Website bearbeiten
       $spalte = new UI\Spalte("A1");
+      if($status == "i") {
+        $spalte[] = new UI\Meldung("Inaktiv", "Die Seite ist inaktiv. Sie kann nicht /* @TODO: Meldung */", "Warnung", new UI\Icon("fas fa-eye-slash"));
+      }
       $spalte ->addKlasse("dshWebsiteBearbeitenSpalte");
 
       $balken = new UI\Balken("Zeit", time(), $DSH_BENUTZER->getSessiontimeout(), false, $DSH_BENUTZER->getInaktivitaetszeit());
@@ -132,16 +138,14 @@ class Seite extends Kern\Seite {
       $knopfSeiteVersion = null;
       if($DSH_SEITENVERSION == "alt" && $DSH_BENUTZER->hatRecht("website.inhalte.versionen.alt.aktivieren")) {
         $knopfSeiteVersion = new UI\GrossIconKnopf(new UI\Icon("fas fa-history fa-flip-horizontal"), "Daten wiederherstellen", "Warnung");
-        $knopfSeiteVersion ->addFunktion("onclick", "website.verwaltung.seiten.setzen.version.fragen({$this->seitenId}, 'a')");
+        $knopfSeiteVersion ->addFunktion("onclick", "website.verwaltung.seiten.setzen.version.fragen({$this->seitenId}, 'a', '$DSH_SPRACHE')");
       }
       if($DSH_SEITENVERSION == "neu" && $DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.aktivieren")) {
         $knopfSeiteVersion = new UI\GrossIconKnopf(new UI\Icon("fas fa-check-double"), "Daten freigeben", "Erfolg");
-        $knopfSeiteVersion ->addFunktion("onclick", "website.verwaltung.seiten.setzen.version.fragen({$this->seitenId}, 'n')");
+        $knopfSeiteVersion ->addFunktion("onclick", "website.verwaltung.seiten.setzen.version.fragen({$this->seitenId}, 'n', '$DSH_SPRACHE')");
       }
 
       if($DSH_BENUTZER->hatRecht("website.seiten.bearbeiten")) {
-        $DBS->anfrage("SELECT status FROM website_seiten WHERE id = ?", "i", $this->seitenId)
-              ->werte($status);
         if($status == "i") {
           $knopfSeiteStatus = new UI\GrossIconKnopf(new UI\Icon("fas fa-toggle-off"), "Aktivieren", "Erfolg");
           $knopfSeiteStatus ->addFunktion("onclick", "website.verwaltung.seiten.setzen.status({$this->seitenId}, 'a').then(_ => core.neuladen())");
@@ -158,9 +162,9 @@ class Seite extends Kern\Seite {
         $knopfSeiteLoeschen   ->addFunktion("onclick", "website.verwaltung.seiten.loeschen.fragen({$this->seitenId})");
       }
 
-      $aktionenModus      = new UI\Box(new UI\Ueberschrift("3", "Modus"), $knopfSehen, $knopfBearbeiten);
-      $aktionenVersion    = new UI\Box(new UI\Ueberschrift("3", "Version"), $knopfAlt, $knopfAktuell, $knopfNeu);
-      $aktionenAktionen   = new UI\Box(new UI\Ueberschrift("3", "Aktionen"), $knopfSeiteVersion, $knopfSeiteStatus, $knopfSeiteBearbeiten, $knopfSeiteLoeschen);
+      $aktionenModus      = (new UI\Box(new UI\Ueberschrift("3", "Modus"), $knopfSehen, $knopfBearbeiten))->addKlasse("modus");
+      $aktionenVersion    = (new UI\Box(new UI\Ueberschrift("3", "Version"), $knopfAlt, $knopfAktuell, $knopfNeu))->addKlasse("version");
+      $aktionenAktionen   = (new UI\Box(new UI\Ueberschrift("3", "Aktionen"), $knopfSeiteVersion, $knopfSeiteStatus, $knopfSeiteBearbeiten, $knopfSeiteLoeschen))->addKlasse("aktionen");
 
       $aktionen = new UI\Box();
       if(count($aktionenModus->getKinder()) > 1) {
@@ -244,14 +248,41 @@ class Seite extends Kern\Seite {
     while($inhalte->werte($typ, $id, $position, $status)) {
       // Elemente ausgeben
       $element = new $elemente[$typ]($id, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
+      if($element->anzeigen()) {
+        if($DSH_SEITENMODUS == "bearbeiten") {
+          $neu = new UI\Box();
+          $neu ->addKlasse("dshWebsiteNeuBalken");
+          $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
+          $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
+          $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', $position, {$this->seitenId})");
+          $neuMenue = new UI\Box($knopfEditorNeu);
 
-      if($DSH_SEITENMODUS == "bearbeiten") {
-        $element->addFunktion("onclick", "website.elemente.bearbeiten.fenster('$typ', $id, '$DSH_SPRACHE')");
+          $spalte[] = $neu;
+          $spalte[] = $neuMenue;
+          $element->addFunktion("onclick", "website.elemente.bearbeiten.fenster('$typ', $id, '$DSH_SPRACHE')");
+          $element->addKlasse("dshWebsiteBearbeitbar");
+        }
+        if($status == "i") {
+          if($DSH_SEITENMODUS == "bearbeiten" && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.bearbeiten")) {
+            $element  ->addKlasse("dshWebsiteBearbeitenInaktiv");
+            $spalte[] = $element;
+          }
+        } else {
+          $spalte[] = $element;
+        }
       }
-
-      $spalte[] = $element;
     }
+    if($DSH_SEITENMODUS == "bearbeiten") {
+      $neu = new UI\Box();
+      $neu ->addKlasse("dshWebsiteNeuBalken");
+      $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
+      $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
+      $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', ".($position+1).", {$this->seitenId})");
+      $neuMenue = new UI\Box($knopfEditorNeu);
 
+      $spalte[] = $neu;
+      $spalte[] = $neuMenue;
+    }
     $code .= new UI\Zeile($spalte);
 
     $sprachwahl = new UI\Auswahl("dshWebsiteSprache", $DSH_SPRACHE);

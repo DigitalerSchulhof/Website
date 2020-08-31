@@ -32,5 +32,5 @@ if(!$DBS->existiert("website_$element", $id)) {
 
 include_once __DIR__."/_details.php";
 
-Anfrage::setRueck("Code", (string) elementDetails(array("tabelle" => $element, "klasse" => $elemente[$element], "sprache" => $sprache), $id, true));
+Anfrage::setRueck("Code", (string) elementDetails(array("tabelle" => $element, "klasse" => $elemente[$element], "sprache" => $sprache), $id));
 ?>

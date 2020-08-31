@@ -7,8 +7,16 @@
 }
 
   #dshWebsiteBearbeitenAktionen>div {
-    flex-grow: 1;
     text-align: center;
+  }
+  #dshWebsiteBearbeitenAktionen>div.modus {
+    flex-grow: 1;
+  }
+  #dshWebsiteBearbeitenAktionen>div.version {
+    flex-grow: 2;
+  }
+  #dshWebsiteBearbeitenAktionen>div.aktionen {
+    flex-grow: 3;
   }
   #dshWebsiteBearbeitenAktionen>div h3 {
     margin-bottom: 5px;
@@ -27,4 +35,44 @@
 
 .dshSeiteH #dshWebsiteBearbeitenAktionen>div .dshUiKnopf {
   width: inherit;
+}
+
+.dshWebsiteBearbeitbar {
+  cursor: pointer;
+  transition: background-color 250ms ease-in-out;
+}
+
+.dshWebsiteNeuBalken {
+  display: block;
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  transition: background-color 250ms ease-in-out;
+}
+
+.dshWebsiteNeuBalken+div {
+  display: none;
+}
+.dshWebsiteNeuBalken+div>.dshUiKnopf {
+  margin: 5px;
+}
+.dshWebsiteNeuBalken.dshWebsiteNeuSichtbar+div {
+  display: flex;
+}
+
+// FARBEN
+.dshWebsiteBearbeitenInaktiv {
+  background-color: @warnungHintergrund;
+}
+
+.dshWebsiteBearbeitbar:hover {
+  background-color: @abstufung1;
+}
+
+.dshWebsiteNeuBalken,
+.dshWebsiteNeuBalken+div {
+  background-color: @erfolgHintergrund;
+}
+.dshWebsiteNeuBalken:hover {
+  background-color: @erfolgAkzent;
 }

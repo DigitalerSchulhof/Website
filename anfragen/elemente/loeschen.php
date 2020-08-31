@@ -1,15 +1,11 @@
 <?php
-Anfrage::post("element", "id", "sprache");
+Anfrage::post("element", "id");
 
 if(!Kern\Check::angemeldet()) {
   Anfrage::addFehler(-2, true);
 }
 
 if(!UI\Check::istZahl($id)) {
-  Anfrage::addFehler(-3, true);
-}
-
-if(!$DBS->existiert("website_sprachen", "a2 = [?]", "s", $sprache)) {
   Anfrage::addFehler(-3, true);
 }
 
@@ -27,7 +23,7 @@ Anfrage::post(...array_keys($klasse->getFelder()));
 $klasse->postValidieren();
 Anfrage::checkFehler();
 
-if (!$DSH_BENUTZER->hatRecht("website.inhalte.elemente.bearbeiten")) {
+if (!$DSH_BENUTZER->hatRecht("website.inhalte.elemente.löschen")) {
   Anfrage::addFehler(-4, true);
 }
 

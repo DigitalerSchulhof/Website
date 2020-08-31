@@ -55,8 +55,15 @@ abstract class Element extends UI\Element {
    * Gibt das Element im Bearbeitungs-Modus aus
    * @param string $idpre Stamm der IDs, welcher zu Beginn jeder Eingabe vorkommen sollte
    * Dient zur Unterscheidung zwischen mehreren Fenstern
+   * @return UI\Element
    */
   public abstract function bearbeiten($idpre) : UI\Element;
+
+  /**
+   * Prüft, ob das Element Inhalt hat und angezeigt werden kann.
+   * @return bool
+   */
+  public abstract function anzeigen() : bool;
 
   /**
    * Gibt das Element als gültigen HTML-Code <b>zum Betrachten auf der Website, nicht Bearbeiten</b> zurück
@@ -66,6 +73,7 @@ abstract class Element extends UI\Element {
     return parent::__toString();
   }
 
+
   /**
    * Füllt die Variablen mit Inhalten aus der Datenbank
    * @param  string $tabelle      Tabelle, in welcher sich die Daten befinden, siehe <code>ELEMENT</code> im readme.
@@ -74,7 +82,7 @@ abstract class Element extends UI\Element {
   public function werteFuellen($tabelle, &...$variablen) {
     global $DBS;
     $select = [];
-    foreach($this->felder as $spalte => $w) {
+    foreach($this->felder as $spalte => $_) {
       $select[] = "IF(wei.$spalte{$this->version} IS NULL, (SELECT weii.$spalte{$this->version} FROM website_{$tabelle}inhalte as weii WHERE weii.element = we.id AND weii.sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wei.$spalte{$this->version})";
     }
     $sql = "SELECT ".join(",", $select)." FROM website_$tabelle as we JOIN website_sprachen as ws LEFT JOIN website_{$tabelle}inhalte as wei ON wei.sprache = ws.id AND wei.element = we.id WHERE ws.a2 = [?] AND we.id = ?";

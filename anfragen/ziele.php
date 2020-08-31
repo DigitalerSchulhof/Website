@@ -18,4 +18,6 @@ $ZIELE[15] = "elemente/neufenster.php";
 $ZIELE[16] = "elemente/neuspeichern.php";
 $ZIELE[17] = "elemente/bearbeitenfenster.php";
 $ZIELE[18] = "elemente/bearbeitenspeichern.php";
+$ZIELE[19] = "verwaltung/seiten/setzen/version.php";
+$ZIELE[20] = "elemente/loeschen.php";
 ?>

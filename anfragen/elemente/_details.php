@@ -6,23 +6,29 @@
  *    "tabelle" => Die Tabelle, in welcher sich das Element findet
  *    "klasse"  => Der Klassenname der Elements
  *    "sprache" => Die Sprache, in welcher der Inhalt geladen werden soll
+ * Wenn neues Element:
+ *    "position" => Position, in welches das Element soll
+ *    "seite"    => ID der Seite
  * ]
  * [Tabelle, in welcher sich das Element findet => Klassenname des Elements]
  * @param  string   $klasse Die Klasse des Elements
  * @param  int|null $id Die ID des zu ladenden Elements
- * @param  int|null $position Die Position des neuen Elements
- * In Verwendung, wenn ein neues Element angelegt wird
  * @return UI\Fenster
  */
-function elementDetails($element, $id = null, $position = null) : UI\Fenster {
-  $el       = $element["tabelle"];
-  $klasse   = $element["klasse"];
-  $sprache  = $element["sprache"];
+function elementDetails($element, $id = null) : UI\Fenster {
+  $el         = $element["tabelle"];
+  $klasse     = $element["klasse"];
+  $sprache    = $element["sprache"];
+  if($id === null) {
+    $position = $element["position"];
+    $seite    = $element["seite"];
+  }
   global $DBS;
   if($id === null) {
-    $idpre    = "dshWebsiteElementNeu$el";
+    $idpre    = "dshWebsiteElementNeu";
     $fenstertitel = "Neue Element anlegen";
     $spalte   = new UI\Spalte("A1", new UI\SeitenUeberschrift("Neue Element anlegen"));
+    $spalte[] = new UI\Meldung("Standardsprache", "Neue Inhalte werden zunächst nur in der Standardsprache angelegt, sodass diese auf jede Sprache verfügbar sind.<br>Um Inhalte für nur eine Sprache zu ändern, muss das Element im Nachhinein bearbeitet werden.", "Information", new UI\Icon("fas fa-language"));
   } else {
     $idpre    = "dshWebsiteElementBearbeiten{$el}_$id";
     $fenstertitel = "Element bearbeiten";
@@ -54,7 +60,7 @@ function elementDetails($element, $id = null, $position = null) : UI\Fenster {
   $formular[] = new UI\FormularFeld(new UI\VerstecktesFeld("{$idpre}Felder", join(";", $felder)));
   if($id === null) {
     $formular[] = (new UI\Knopf("Neues Element anlegen", "Erfolg")) ->setSubmit(true);
-    $formular   ->addSubmit("website.elemente.neu.speichern('$el', '$position', '$sprache')");
+    $formular   ->addSubmit("website.elemente.neu.speichern('$el', $position, $seite)");
   } else {
     $formular[] = (new UI\Knopf("Änderungen speichern", "Erfolg"))  ->setSubmit(true);
     $formular   ->addSubmit("website.elemente.bearbeiten.speichern('$el', $id, '$sprache')");
