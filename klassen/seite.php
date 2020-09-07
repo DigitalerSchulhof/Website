@@ -47,9 +47,9 @@ class Seite extends Kern\Seite {
             $klammer = " (".join(", ", $extra).")";
           }
 
-          $brotkrumen = array_merge($brotkrumen, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$seg" => "$seg$klammer"));
+          $brotkrumen = array_merge($brotkrumen, array("$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$seg" => "$seg$klammer"));
         } else {
-          $brotkrumen = array_merge($brotkrumen, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$seg" => $seg));
+          $brotkrumen = array_merge($brotkrumen, array("$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$seg" => $seg));
           $pfad .= "$seg/";
         }
       }
@@ -94,10 +94,10 @@ class Seite extends Kern\Seite {
       }
 
       $knopfSehen           = new UI\GrossIconKnopf(new UI\Icon("fas fa-binoculars"), "Betrachten");
-      $knopfSehen           ->addFunktion("href", "Website/$pfsprache$pfversion$pfad");
+      $knopfSehen           ->addFunktion("href", "$pfsprache$pfversion$pfad");
       if($DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
         $knopfBearbeiten      = new UI\GrossIconKnopf(new UI\Icon(UI\Konstanten::BEARBEITEN), "Bearbeiten");
-        $knopfBearbeiten      ->addFunktion("href", "Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][1]}/$pfad");
+        $knopfBearbeiten      ->addFunktion("href", "$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][1]}/$pfad");
       }
       switch($DSH_SEITENMODUS) {
         case "sehen":
@@ -115,13 +115,13 @@ class Seite extends Kern\Seite {
 
       if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.alt.sehen")) {
         $knopfAlt         = new UI\GrossIconKnopf(new UI\Icon("fas fa-hourglass-end"),   "Alte Daten");
-        $knopfAlt         ->addFunktion("href", "Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][0]}/$pfmodus$pfad");
+        $knopfAlt         ->addFunktion("href", "$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][0]}/$pfmodus$pfad");
       }
       $knopfAktuell     = new UI\GrossIconKnopf(new UI\Icon("fas fa-hourglass-half"),  "Aktuelle Daten");
-      $knopfAktuell     ->addFunktion("href", "Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][1]}/$pfmodus$pfad");
+      $knopfAktuell     ->addFunktion("href", "$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][1]}/$pfmodus$pfad");
       if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.sehen")) {
         $knopfNeu         = new UI\GrossIconKnopf(new UI\Icon("fas fa-hourglass-start"), "Neue Daten");
-        $knopfNeu         ->addFunktion("href", "Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][2]}/$pfmodus$pfad");
+        $knopfNeu         ->addFunktion("href", "$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][2]}/$pfmodus$pfad");
       }
       switch($DSH_SEITENVERSION) {
         case "alt":
@@ -220,9 +220,9 @@ class Seite extends Kern\Seite {
 
         $this->titel = $bez;
 
-        $brotkrumen = array_merge($brotkrumen, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$pf" => "$bez$klammer"));
+        $brotkrumen = array_merge($brotkrumen, array("$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$pf" => "$bez$klammer"));
       } else {
-        $brotkrumen = array_merge($brotkrumen, array("Website/$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$pf" => $bez));
+        $brotkrumen = array_merge($brotkrumen, array("$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$pf" => $bez));
         $pfad .= "$pf/";
       }
 
@@ -302,13 +302,13 @@ class Seite extends Kern\Seite {
             ->werte($u);
       $url .= $u;
       $infos = [];
-      if($a2 != $DSH_STANDARDSPRACHE || count($DSH_URL) != count($DSH_SEITENPFAD) + 1) {
+      if($a2 != $DSH_STANDARDSPRACHE || count($DSH_URL) > count($DSH_SEITENPFAD) + 1) {
         $infos[] = $a2;
       }
-      if(count($DSH_URL) > count($DSH_SEITENPFAD) + 1) {
+      if(count($DSH_URL) >= count($DSH_SEITENPFAD) + 2) {
         $infos[] = $versionen[$a2][$ver];
       }
-      if(count($DSH_URL) > count($DSH_SEITENPFAD) + 2) {
+      if(count($DSH_URL) >= count($DSH_SEITENPFAD) + 3) {
         $infos[] = $modi[$a2][$mod];
       }
       $infos = join("/", $infos);

@@ -3,26 +3,18 @@ namespace Website;
 use Kern\Check as Check;
 
 /*
-
-  Ideale URL (RegEx): sei
-  {z} : [\-\:\(\)\[\]\{\}äöüßáéíóúàèìòùæâêîôûøØÇãåçëïõÿñ0-9a-z]     Eine Seitenbezeichnung
-  {s} : ((?:{z}+\/)*(?:{z}+)+)                                      Der komplette Seitenpfad
-
-  /^Website\/(DE|EN|FR)\/(Alt|Aktuell|Neu)\/(Sehen|Bearbeiten)\/{s}$/i
-    => /^Website\/(DE|EN|FR)\/(Alt|Aktuell|Neu)\/(Sehen|Bearbeiten)\/((?:[\-\:\(\)\[\]\{\}äöüßáéíóúàèìòùæâêîôûøØÇãåçëïõÿñ0-9a-z]+\/)*(?:[\-\:\(\)\[\]\{\}äöüßáéíóúàèìòùæâêîôûøØÇãåçëïõÿñ0-9a-z]+)+)$/i
-
   Bei Sprache, Version und Modus sind die jeweils Vorherigen notwendig, um eine gültige URL zu bilden.
 
   Abkürzen ist insoweit möglich, als bei Sprache »DE«, bei Version »Aktuell«, und bei Modus »Sehen« angenommen wird, sofern dises nicht anders gegeben ist:
 
 
-  Website/{s}                     -> Website/DE/Aktuell/Sehen/{s}
-  Website/Sehen/{s}               -> Ungültig, da Sprache fehlt
-  Website/Bearbeiten/{s}          -> Ungültig, da Sprache und Version fehlen
-  Website/EN/{s}                  -> Website/EN/Current/View/{s}
-  Website/DE/Aktuell/{s}          -> Website/DE/Aktuell/Sehen/{s}
-  Website/FR/Ancien/{s}           -> Website/FR/Ancien/Voir/{s}
-  Website/DE/Neu/Bearbeiten/{s}   -> Website/DE/Neu/Bearbeiten/{s}
+  {s}                     -> DE/Aktuell/Sehen/{s}
+  Sehen/{s}               -> Ungültig, da Sprache fehlt
+  Bearbeiten/{s}          -> Ungültig, da Sprache und Version fehlen
+  EN/{s}                  -> EN/Current/View/{s}
+  DE/Aktuell/{s}          -> DE/Aktuell/Sehen/{s}
+  FR/Ancien/{s}           -> FR/Ancien/Voir/{s}
+  DE/Neu/Bearbeiten/{s}   -> DE/Neu/Bearbeiten/{s}
 
   Ist Sprache, Version oder Modus gegeben, muss {s} angegeben sein.
 
@@ -66,10 +58,10 @@ $WEBSITE_URL = [];
 $standardmodus = 0;
 $standardversion = 1;
 
-// Website/Sprache/Version/Modus/Seiten..
+// Sprache/Version/Modus/Seiten..
 
 $url = $DSH_URL;
-if($url[0] === "Website" || $url[0] === "") {
+if($url[0] === "") {
   array_shift($url);
 }
 if(count($url) > 0) {
@@ -121,10 +113,9 @@ if(count($url) > 0) {
   }
 } else {
   // keine Seite
+  $DSH_URL = [$startseite[$DSH_STANDARDSPRACHE]];
   $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STANDARDSPRACHE, $versionen[$DSH_STANDARDSPRACHE][$standardversion], $modi[$DSH_STANDARDSPRACHE][$standardmodus], $startseite[$DSH_STANDARDSPRACHE]]);
 }
-
-// Ab hier ist $WEBSITE_URL eine gültige Seite, OHNE Website/ vorne dran
 
 $DSH_SPRACHE        = $WEBSITE_URL[0];                                          // Sprachkürzel
 $DSH_SEITENVERSION  = array_search($WEBSITE_URL[1], $versionen[$DSH_SPRACHE]);
