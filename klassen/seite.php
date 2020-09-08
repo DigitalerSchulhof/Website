@@ -33,6 +33,7 @@ class Seite extends Kern\Seite {
 
       $pfad = "";
       foreach($DSH_SEITENPFAD as $i => $seg) {
+        $seg = Kern\Texttrafo::url2text($seg);
         if($i === count($DSH_SEITENPFAD)-1) {
           // Letzte Seite
           $extra = [];
@@ -56,7 +57,7 @@ class Seite extends Kern\Seite {
 
       $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
 
-      $DBS->anfrage("SELECT {titel}, {inhalt} FROM website_fehlermeldungen WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = [?]) AND fehler = ?", "ss", $DSH_SPRACHE, $this->fehler)
+      $DBS->anfrage("SELECT {IF(titel IS NULL, (SELECT titel FROM website_fehlermeldungen as wfms WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) AND wfms.fehler = wfm.fehler), titel)}, {IF(inhalt IS NULL, (SELECT inhalt FROM website_fehlermeldungen as wfms WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) AND wfms.fehler = wfm.fehler), inhalt)} FROM website_fehlermeldungen as wfm WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = [?]) AND fehler = ?", "ss", $DSH_SPRACHE, $this->fehler)
         ->werte($ftitel, $finhalt);
 
       $code .= UI\Zeile::standard(new UI\Meldung("$ftitel", "$finhalt", "Fehler"));
@@ -185,11 +186,12 @@ class Seite extends Kern\Seite {
 
     $zug = $this->seitenId;
     $pfadBez = [];
-    while($DBS->anfrage("SELECT ws.zugehoerig, {(SELECT IF(wsd.bezeichnung IS NULL, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung))}, {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE ws.id = ? AND wsp.a2 = [?]", "is", $zug, $DSH_SPRACHE)->werte($zug, $segB, $segP)) {
+    while($DBS->anfrage("SELECT ws.zugehoerig, {(SELECT IF(wsd.bezeichnung IS NULL, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung))}, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE ws.id = ? AND wsp.a2 = [?]", "is", $zug, $DSH_SPRACHE)->werte($zug, $segB, $segP)) {
       $pfadBez[] = [$segP, $segB];
     }
 
     $pfadBez = array_reverse($pfadBez);
+    $pfadBez = Kern\Texttrafo::url2text($pfadBez);
     $pfad = "";
     foreach($pfadBez as $i => $seg) {
       $pf   = $seg[0];
@@ -200,13 +202,13 @@ class Seite extends Kern\Seite {
         if($DSH_SPRACHE !== $DSH_STANDARDSPRACHE) {
           $DBS->anfrage("SELECT {name} FROM website_sprachen WHERE a2 = [?]", "s", $DSH_SPRACHE)
                 ->werte($name);
-          $extra[] = $name;
+          $extra[] = Kern\Texttrafo::url2text($name);
         }
         if($ver !== $standardversion) {
-          $extra[] = $versionen[$DSH_SPRACHE][$ver];
+          $extra[] = Kern\Texttrafo::url2text($versionen[$DSH_SPRACHE][$ver]);
         }
         if($mod !== $standardmodus) {
-          $extra[] = $modi[$DSH_SPRACHE][$mod];
+          $extra[] = Kern\Texttrafo::url2text($modi[$DSH_SPRACHE][$mod]);
         }
         $DBS->anfrage("SELECT status FROM website_seiten WHERE id = ?", "i", $this->seitenId)
               ->werte($status);
@@ -225,9 +227,8 @@ class Seite extends Kern\Seite {
         $brotkrumen = array_merge($brotkrumen, array("$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$pf" => $bez));
         $pfad .= "$pf/";
       }
-
-      $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
     }
+    $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
 
     $elemente = array();
 
@@ -293,12 +294,12 @@ class Seite extends Kern\Seite {
       $url = "";
       $zug = $this->seitenId;
       // Pfad für die Sprache bestimmen
-      while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "ii", $sprachId, $zug)->werte($zid, $u)) {
+      while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "ii", $sprachId, $zug)->werte($zid, $u)) {
         $zug      = $zid;
         $url  = "$u/$url";
       }
       // Letze Bezeichnung bestimmen
-      $DBS->anfrage("SELECT {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = ?", "ii", $sprachId, $this->seitenId)
+      $DBS->anfrage("SELECT {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = ?", "ii", $sprachId, $this->seitenId)
             ->werte($u);
       $url .= $u;
       $infos = [];
@@ -315,6 +316,7 @@ class Seite extends Kern\Seite {
       if(strlen($infos) > 0) {
         $infos .= "/";
       }
+      $url = Kern\Texttrafo::text2url($url);
       $sprachwahl->add($bez, "$infos$url", $DSH_SPRACHE == $a2);
     }
     $sprachwahl->addKlasse("dshUiEingabefeldKlein");
@@ -331,6 +333,7 @@ class Seite extends Kern\Seite {
     // Pfad auflösen
     $DBS->anfrage("SELECT id, {fehler} FROM website_sprachen WHERE a2 = [?]", "s", $sprache)
           ->werte($sprachenId, $fehler);
+    $fehler = Kern\Texttrafo::text2url($fehler);
 
     if($pfad[0] === $fehler) {
       // Fehlerseite
@@ -342,14 +345,14 @@ class Seite extends Kern\Seite {
     $pfadTrav = $pfad;
     while(count($pfadTrav) > 0) {
       $seg = array_shift($pfadTrav);
-
+      $seg = Kern\Texttrafo::url2text($seg);
       if($seitenId === null) {
-        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig IS NULL AND wsp.id = ? AND IF(wsd.pfad IS NULL, {(SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)))} = ?, wsd.pfad = [?])", "iss", $sprachenId, $seg, $seg)->werte($seitenId)) {
+        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig IS NULL AND wsp.id = ? AND IF(wsd.pfad IS NULL, {IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung)} = ?, wsd.pfad = [?])", "iss", $sprachenId, $seg, $seg)->werte($seitenId)) {
           $seitenId = null;
           break;
         }
       } else {
-        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig = ? AND wsp.id = ? AND IF(wsd.pfad IS NULL, {(SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)))} = ?, wsd.pfad = [?])", "iiss", $seitenId, $sprachenId, $seg, $seg)->werte($seitenId)) {
+        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig = ? AND wsp.id = ? AND IF(wsd.pfad IS NULL, {IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung)} = ?, wsd.pfad = [?])", "iiss", $seitenId, $sprachenId, $seg, $seg)->werte($seitenId)) {
           $seitenId = null;
           break;
         }

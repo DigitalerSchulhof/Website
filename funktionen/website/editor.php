@@ -21,7 +21,7 @@ class Editor extends Element {
 
   public static function postValidieren() {
     global $inhalt;
-    if(!UI\Check::istText($inhalt)) {
+    if(!UI\Check::istEditor($inhalt)) {
       \Anfrage::addFehler(20);
     }
   }

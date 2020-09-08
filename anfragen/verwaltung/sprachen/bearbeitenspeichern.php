@@ -53,7 +53,7 @@ if($DBS->existiert("website_sprachen", "name = [?] AND id != ?", "si", $name, $i
   Anfrage::addFehler(11);
 }
 
-if($DBS->existiert("website_sprachen", "namestandard = [?] AND id != ?", "si", $namestandard, $id)) {
+if(strlen($namestandard) > 0 && $DBS->existiert("website_sprachen", "namestandard = [?] AND id != ?", "si", $namestandard, $id)) {
   Anfrage::addFehler(12);
 }
 

@@ -77,10 +77,10 @@
     - anfragen/verwaltung/seiten/bearbeitenspeichern.php
   beschreibung: Es existiert bereits eine weitere Seite mit diesem <b>Pfadabschnitt</b> und derselben übergeordneten Seite.
 17:
-  ort: anfrage/verwaltung/seiten/bearbeitenspeichern.php
+  ort: anfragen/verwaltung/seiten/bearbeitenspeichern.php
   beschreibung: Die Startseite darf nicht <b>inaktiv</b> und muss eine <b>Seite mit Inhalt</b> sein.
 18:
-  ort: anfrage/verwaltung/seiten/loeschen.php
+  ort: anfragen/verwaltung/seiten/loeschen.php
   beschreibung: Die Startseite kann nicht <b>gelöscht</b> werden. Zuvor muss eine andere Seite zur Startseite gemacht werden.
 19:
   ort: anfrage/verwaltung/seiten/setzen/status.php
@@ -88,3 +88,9 @@
 20:
   ort: funktionen/website/editor.php
   beschreibung: Der <b>Inhalt</b> ist ungültig.
+21:
+  ort: anfragen/verwaltung/fehlermeldungen/speicher.php
+  beschreibung: Ein <b>Titel</b> ist ungültig.
+22:
+  ort: anfragen/verwaltung/fehlermeldungen/speicher.php
+  beschreibung: Ein <b>Inhalt</b> ist ungültig.

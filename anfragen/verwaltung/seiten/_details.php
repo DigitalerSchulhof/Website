@@ -54,9 +54,9 @@ function seiteDetails($id = null, $zugehoerig = null) : UI\Fenster {
           ->werte($bezeichnung, $pfad);
   }
 
-  $formular[] = new UI\Formularfeld(new UI\Ueberschrift("3", "$standardsprache:"));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Bezeichnung:"),   (new UI\Textfeld("{$idpre}Bezeichnung$a2")) ->setWert($bezeichnung));
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Pfadabschnitt:"), (new UI\Textfeld("{$idpre}Pfad$a2"))        ->setWert($pfad));
+  $formular[] =  new UI\Formularfeld(new UI\Ueberschrift("3", "$standardsprache:"));
+  $formular[] =  new UI\FormularFeld(new UI\InhaltElement("Bezeichnung:"),   (new UI\Textfeld("{$idpre}Bezeichnung$a2")) ->setWert($bezeichnung));
+  $formular[] = (new UI\FormularFeld(new UI\InhaltElement("Pfadabschnitt:"), (new UI\Textfeld("{$idpre}Pfad$a2"))        ->setWert($pfad)))->setOptional(true);
 
   $anf      = $DBS->anfrage("SELECT id, {a2}, IF(namestandard = [''], {name}, CONCAT({name}, ' (', {namestandard}, ')')) as bezeichnung FROM website_sprachen WHERE id != ?", "i", $standardid);
   $sprachen = [$a2];

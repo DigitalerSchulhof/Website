@@ -49,7 +49,7 @@ if($DBS->existiert("website_sprachen", "name = [?]", "s", $name)) {
   Anfrage::addFehler(11);
 }
 
-if($DBS->existiert("website_sprachen", "namestandard = [?]", "s", $namestandard)) {
+if(strlen($namestandard) > 0 && $DBS->existiert("website_sprachen", "namestandard = [?]", "s", $namestandard)) {
   Anfrage::addFehler(12);
 }
 
@@ -63,5 +63,5 @@ if (!$DSH_BENUTZER->hatRecht("website.sprachen.anlegen")) {
 $id = $DBS->neuerDatensatz("website_sprachen",
   array("a2" => "[?]", "name" => "[?]", "namestandard" => "[?]", "alt" => "[?]", "aktuell" => "[?]", "neu" => "[?]", "sehen" => "[?]", "bearbeiten" => "[?]", "fehler" => "[?]"),
   "sssssssss", $a2, $name, $namestandard, $alt, $aktuell, $neu, $sehen, $bearbeiten, $fehler);
-
+$DBS->anfrage("INSERT INTO website_fehlermeldungen (sprache, fehler, titel, inhalt) VALUES (?, '403', NULL, NULL), (?, '404', NULL, NULL)", "ii", $id, $id);
 ?>

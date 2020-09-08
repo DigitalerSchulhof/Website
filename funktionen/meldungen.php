@@ -107,5 +107,10 @@ switch ($meldeid) {
     $knoepfe[] = (UI\Knopf::ok())->addFunktion("onclick", "core.neuladen()");
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;
+  case 18:
+    Anfrage::setRueck("Meldung", new UI\Meldung("Fehlermeldungen bearbeiten", "Die Fehlermeldungen wurden bearbeitet.", "Erfolg"));
+    $knoepfe[] = (UI\Knopf::ok())->addFunktion("onclick", "core.neuladen()");
+    Anfrage::setRueck("Knöpfe", $knoepfe);
+    break;
 }
 ?>

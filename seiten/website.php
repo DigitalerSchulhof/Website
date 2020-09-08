@@ -1,6 +1,6 @@
 <?php
 namespace Website;
-use Kern\Check as Check;
+use Kern;
 
 /*
   Bei Sprache, Version und Modus sind die jeweils Vorherigen notwendig, um eine gültige URL zu bilden.
@@ -37,22 +37,18 @@ $modi         = [];
 $startseite   = [];
 
 // Startseite nimmt, wenn vorhanden den Pfad der Sprache, ansonsten Fallback der Standardsprache
-$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = wsd.seite AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad) FROM website_seitendaten as wsd WHERE wsd.sprache = wsp.id AND wsd.seite = (SELECT id FROM website_seiten WHERE startseite = 1))} FROM website_sprachen as wsp");
+$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = wsd.seite AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad) FROM website_seitendaten as wsd WHERE wsd.sprache = wsp.id AND wsd.seite = (SELECT id FROM website_seiten WHERE startseite = 1))} FROM website_sprachen as wsp");
 while($anf->werte($a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeiten, $s)) {
-  $name       = str_replace(" ", "_", $name);
-  $namestd    = str_replace(" ", "_", $namestd);
-  $alt        = str_replace(" ", "_", $alt);
-  $aktuell    = str_replace(" ", "_", $aktuell);
-  $neu        = str_replace(" ", "_", $neu);
-  $sehen      = str_replace(" ", "_", $sehen);
-  $bearbeiten = str_replace(" ", "_", $bearbeiten);
-  $s          = str_replace(" ", "_", $s);
-
   $DSH_SPRACHEN [$a2] = [$name, $namestd];
   $versionen    [$a2] = [$alt, $aktuell, $neu];
   $modi         [$a2] = [$sehen, $bearbeiten];
-  $startseite   [$a2] =  $s;
+  $startseite   [$a2] = $s;
 }
+
+$DSH_SPRACHEN = Kern\Texttrafo::text2url($DSH_SPRACHEN);
+$versionen    = Kern\Texttrafo::text2url($versionen);
+$modi         = Kern\Texttrafo::text2url($modi);
+$startseite   = Kern\Texttrafo::text2url($startseite);
 $WEBSITE_URL = [];
 
 $standardmodus = 0;
@@ -125,13 +121,13 @@ $DSH_SEITENVERSION  = ["alt", "aktuell", "neu"][$DSH_SEITENVERSION];
 $DSH_SEITENMODUS    = ["sehen", "bearbeiten"][$DSH_SEITENMODUS];
 
 if(in_array($DSH_SEITENVERSION, ["alt", "neu"])) {
-  if(!Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.versionen.$DSH_SEITENVERSION.sehen")) {
+  if(!Kern\Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.versionen.$DSH_SEITENVERSION.sehen")) {
     \Seite::seiteAus("Fehler/403");
   }
 }
 
 if($DSH_SEITENMODUS == "bearbeiten") {
-  if(!Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
+  if(!Kern\Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
     \Seite::seiteAus("Fehler/403");
   }
 }

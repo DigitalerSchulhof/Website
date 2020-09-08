@@ -25,7 +25,7 @@ foreach($sprachen as $sprache => $werte) {
     if(!UI\Check::istText($werte["bezeichnung"])) {
       Anfrage::addFehler(14);
     }
-    if(!UI\Check::istText($werte["pfad"])) {
+    if(!UI\Check::istText($werte["pfad"], 0)) {
       Anfrage::addFehler(15);
     }
   } else {

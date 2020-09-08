@@ -1,4 +1,5 @@
 seiten:
   "Schulhof/Verwaltung/Sprachen"  : "verwaltung/sprachen.php"
+  "/^Schulhof\/Verwaltung\/Sprachen\/Fehlermeldungen/"  : "verwaltung/fehlermeldungen.php"
   "Schulhof/Verwaltung/Seiten"    : "verwaltung/seiten.php"
-  "/^(?!Schulhof).*$/"            : "website.php"
+  "/^(?!Schulhof)/"               : "website.php"

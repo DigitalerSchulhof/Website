@@ -14,7 +14,7 @@ if (!$DSH_BENUTZER->hatRecht("website.seiten.sehen")) {
   Anfrage::addFehler(-4, true);
 }
 
-$spalten = [["ws.id as id"], ["ws.art as art"], ["ws.status as status"], ["{(SELECT IF(wsd.bezeichnung IS NULL, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung))} as bezeichnung"], ["wsd.bezeichnung IS NULL as bezeichnungIstStandard"], ["{(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))} as pfad"], ["wsd.pfad IS NULL as pfadIstStandard"], ["ws.startseite as startseite"]];
+$spalten = [["ws.id as id"], ["ws.art as art"], ["ws.status as status"], ["{(SELECT IF(wsd.bezeichnung IS NULL, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung))} as bezeichnung"], ["wsd.bezeichnung IS NULL as bezeichnungIstStandard"], ["{(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} as pfad"], ["wsd.pfad IS NULL AND wsd.bezeichnung IS NULL as pfadIstStandard"], ["ws.startseite as startseite"]];
 
 $sql = "SELECT ?? FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.a2 = [?]";
 
@@ -22,7 +22,7 @@ $ta = new Kern\Tabellenanfrage($sql, $spalten, $sortSeite, $sortDatenproseite, $
 $tanfrage = $ta->anfrage($DBS, "s", $sprache);
 $anfrage = $tanfrage["Anfrage"];
 
-$tabelle = new UI\Tabelle("dshVerwaltungSeiten", "website.verwaltung.seiten.suchen", new UI\Icon(Website\Icons::SEITE), "Bezeichnung", "Pfad", "Status");
+$tabelle = new UI\Tabelle("dshVerwaltungSeiten", "website.verwaltung.seiten.suchen", new UI\Icon("fas fa-edit"), "Bezeichnung", "Pfad", "Status");
 $tabelle->setSeiten($tanfrage);
 
 while($anfrage->werte($id, $art, $status, $bezeichnung, $bezeichnungIstStandard, $pfad, $pfadIstStandard, $istStartseite)) {
@@ -32,7 +32,7 @@ while($anfrage->werte($id, $art, $status, $bezeichnung, $bezeichnungIstStandard,
   $einrueckung = 0;
   $pfadpre     = "";
   $zug = $id;
-  while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, (SELECT wsds.pfad FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.pfad))}, wsd.pfad IS NULL FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.a2 = [?] AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "si", $sprache, $zug)->werte($zid, $p, $pIstStandard)) {
+  while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))}, wsd.pfad IS NULL FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.a2 = [?] AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "si", $sprache, $zug)->werte($zid, $p, $pIstStandard)) {
     $zug      = $zid;
     if($pIstStandard) {
       $pfadpre = "<i>$p</i>/$pfadpre";
@@ -75,8 +75,8 @@ while($anfrage->werte($id, $art, $status, $bezeichnung, $bezeichnungIstStandard,
   }
   $zeile["Status"] = $kstatus;
 
-  if($istStartseite) {
-    $zeile->setIcon(new UI\Icon("fas fa-home"));
+  if($art == "m") {
+    $zeile->setIcon(new UI\Icon("fas fa-caret-right"));
   }
 
   if(!$istStartseite && $art == "i" && $status == "a" && $pfadpre == "" && $DSH_BENUTZER->hatRecht("website.seiten.startseite")) {
@@ -84,7 +84,7 @@ while($anfrage->werte($id, $art, $status, $bezeichnung, $bezeichnungIstStandard,
     $knopf ->addFunktion("onclick", "website.verwaltung.seiten.startseite.fragen($id)");
     $zeile ->addAktion($knopf);
   }
-  if($art == "m" && $DSH_BENUTZER->hatRecht("website.seiten.anlegen")) {
+  if($DSH_BENUTZER->hatRecht("website.seiten.anlegen")) {
     $knopf = new UI\MiniIconKnopf(new UI\Icon("fas fa-long-arrow-alt-right"), "Unterseite anlegen", "Erfolg");
     $knopf ->addFunktion("onclick", "website.verwaltung.seiten.neu.fenster($id)");
     $zeile ->addAktion($knopf);
@@ -100,6 +100,9 @@ while($anfrage->werte($id, $art, $status, $bezeichnung, $bezeichnungIstStandard,
     $zeile ->addAktion($knopf);
   }
 
+  if($istStartseite) {
+    $zeile->setIcon(new UI\Icon("fas fa-home"));
+  }
   $tabelle[] = $zeile;
 }
 

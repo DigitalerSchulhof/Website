@@ -18,7 +18,7 @@ new Kern\Wurmloch("funktionen/website/elemente.php", array(), function($r) use (
   $elemente = array_merge($elemente, $r);
 });
 
-if(!isset($elemente[$element]) || !$DBS->existiert("website_{$elemente[$element]}", $id)) {
+if(!isset($elemente[$element]) || !$DBS->existiert("website_$element", $id)) {
   Anfrage::addFehler(-3, true);
 }
 

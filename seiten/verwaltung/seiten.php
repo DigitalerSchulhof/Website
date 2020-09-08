@@ -3,7 +3,7 @@ $SEITE = new Kern\Seite("Seiten", "website.seiten.sehen");
 
 $spalte = new UI\Spalte("A1", new UI\SeitenUeberschrift("Seiten"));
 
-$tabelle = new UI\Tabelle("dshVerwaltungSeiten", "website.verwaltung.seiten.suchen", new UI\Icon(Website\Icons::SEITE), "Bezeichnung", "Pfad", "Status");
+$tabelle = new UI\Tabelle("dshVerwaltungSeiten", "website.verwaltung.seiten.suchen", null, "Bezeichnung", "Pfad", "Status");
 $tabelle ->setAutoladen(true);
 
 $spalte[] = new UI\Meldung("Sprachabhängig", "Seitenbezeichnungen und -pfade sind von der ausgewählten Sprache abhängig.<br><i>Kursive</i> Einträge stammen von der Standardsprache.", "Information");
@@ -20,7 +20,6 @@ while($anf->werte($a2, $bez)) {
 }
 $sprachwahl->addKlasse("dshUiEingabefeldKlein");
 $sprachwahl->setStyle("float", "right");
-
 
 $knoepfe = [$sprachwahl];
 
