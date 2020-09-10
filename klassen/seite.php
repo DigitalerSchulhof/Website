@@ -4,236 +4,246 @@ use Kern;
 use UI;
 
 class Seite extends Kern\Seite {
-  /** @var integer */
-  private $seitenId;
-  /** @var string|null
-   * Wenn <code>false</code>: Kein Fehler
-   * Wenn <code>string</code>: Der Fehlercode
+  /** @var array Daten der Seite
+   * ["id"        => ?int]      ID der Seite
+   * ["sprache"   => string]    A2-Kürzel der Sprache
+   * ["modus"     => string]    Betrachtungsmodus ["sehen", "beaebeiten"]
+   * ["version"   => string]    Version der Seite ["alt", "aktuell", "neu"]
+   * ["pfad"      => string[]]  Aufgerufene Seite
+   *
+   * ["fehler"    => string]    Fehlercode - Gesetzt, wenn <code>id === null</code>
    */
-  private $fehler;
+  private $seite;
 
-  public function __construct($seitenId, $fehler = false) {
+  /**
+   * Lädt die Seite
+   * @param array $daten Seitendaten (Siehe: Kern\Seite::$seite)
+   */
+  public function __construct($daten) {
+    global $DBS;
     parent::__construct(null, false, true);
-    $this->seitenId = $seitenId;
-    $this->fehler  = $fehler;
+    $this->seite = $daten;
+    $DBS->anfrage("SELECT id FROM website_sprachen WHERE a2 = [?]", "s", $this->seite["sprache"])
+          ->werte($this->seite["spracheI"]);
+    if($this->seite["id"] !== null) {
+      $DBS->anfrage("SELECT status FROM website_seiten WHERE id = ?", "i", $this->seite["id"])
+            ->werte($this->seite["status"]);
+    }
+  }
+
+  /**
+   * Erzeugt aus Seitenmetadaten einen String, welcher vor den Seitenpfad gehängt werden kann
+   * @param  string|null $sprache Wenn <code>null</code>: Aktuelle Sprache
+   * @param  string|null $version Wenn <code>null</code>: Aktuelle Version in der gewählten Sprache
+   * @param  string|null $modus   Wenn <code>null</code>: Aktueller Modus in der gewählten Sprache
+   * @return string
+   */
+  public function meta($sprache = null, $version = null, $modus = null) {
+    global $DSH_SEITENVERSIONEN, $DSH_SEITENMODI;
+    $sprache  = $sprache  ?? $this->seite["sprache"];
+    $version  = $version  ?? $this->seite["version"];
+    $modus    = $modus    ?? $this->seite["modus"];
+
+    // (Ausgabe)
+    $versionA = $DSH_SEITENVERSIONEN[$sprache][$version];
+    $modusA   = $DSH_SEITENMODI[$sprache][$modus];
+    if($modus   != STANDARDMODUS) {
+      return "$sprache/$versionA/$modusA";
+    }
+    if($version != STANDARDVERSION) {
+      return "$sprache/$versionA";
+    }
+    if($sprache != STANDARDSPRACHE) {
+      return "$sprache";
+    }
+    return "";
+  }
+
+  /**
+   * Erzeugt eine Bearbeiten-Spalte
+   * @return UI\Spalte
+   */
+  public function genBearbeiten() : UI\Spalte {
+    global $DSH_BENUTZER;
+    $spalte = new UI\Spalte("A1");
+    if($this->seite["status"] == "i") {
+      $spalte[] = new UI\Meldung("Inaktiv", "Die Seite ist inaktiv. Sie kann nicht /* @TODO: Meldung */", "Warnung", new UI\Icon("fas fa-eye-slash"));
+    }
+    $spalte ->addKlasse("dshWebsiteBearbeitenSpalte");
+
+    $balken = new UI\Balken("Zeit", time(), $DSH_BENUTZER->getSessiontimeout(), false, $DSH_BENUTZER->getInaktivitaetszeit());
+    $balken ->setID("dshWebsiteBearbeitenAktivitaet");
+    $spalte[] = $balken;
+    $spalte[] = "<script>kern.schulhof.nutzerkonto.aktivitaetsanzeige.hinzufuegen('dshWebsiteBearbeitenAktivitaet');</script>";
+    $pfad     = join("/", $this->seite["pfad"]);
+
+    // Variablen setzen (Falls Recht nicht vergeben)
+    $knopfSehen = $knopfBearbeiten = $knopfAlt = $knopfAktuell = $knopfNeu = $knopfSeiteVersion = $knopfSeiteStatus = $knopfSeiteBearbeiten = $knopfSeiteLoeschen = null;
+
+    // MODUS
+    $knopfSehen           = new UI\GrossIconKnopf(new UI\Icon("fas fa-binoculars"), "Betrachten");
+    $knopfSehen           ->addFunktion("href", "{$this->meta(null, null, "sehen")}/$pfad");
+    if($DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
+      $knopfBearbeiten      = new UI\GrossIconKnopf(new UI\Icon(UI\Konstanten::BEARBEITEN), "Bearbeiten");
+      $knopfBearbeiten      ->addFunktion("href", "{$this->meta(null, null, "bearbeiten")}/$pfad");
+    }
+
+    // VERSION
+    if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.alt.sehen")) {
+      $knopfAlt         = new UI\GrossIconKnopf(new UI\Icon("fas fa-hourglass-end"),   "Alte Daten");
+      $knopfAlt         ->addFunktion("href", "{$this->meta(null, "alt", null)}/$pfad");
+    }
+    $knopfAktuell     = new UI\GrossIconKnopf(new UI\Icon("fas fa-hourglass-half"),  "Aktuelle Daten");
+    $knopfAktuell     ->addFunktion("href", "{$this->meta(null, "aktuell", null)}/$pfad");
+    if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.sehen")) {
+      $knopfNeu         = new UI\GrossIconKnopf(new UI\Icon("fas fa-hourglass-start"), "Neue Daten");
+      $knopfNeu         ->addFunktion("href", "{$this->meta(null, "neu", null)}/$pfad");
+    }
+
+    // AKTIONEN
+    $knopfSeiteVersion = null;
+    if($this->seite["version"] == "alt" && $DSH_BENUTZER->hatRecht("website.inhalte.versionen.alt.aktivieren")) {
+      $knopfSeiteVersion = new UI\GrossIconKnopf(new UI\Icon("fas fa-history fa-flip-horizontal"), "Daten wiederherstellen", "Warnung");
+      $knopfSeiteVersion ->addFunktion("onclick", "website.verwaltung.seiten.setzen.version.fragen({$this->seite["id"]}, 'a', '{$this->seite["sprache"]}')");
+    }
+    if($this->seite["version"] == "neu" && $DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.aktivieren")) {
+      $knopfSeiteVersion = new UI\GrossIconKnopf(new UI\Icon("fas fa-check-double"), "Daten freigeben", "Erfolg");
+      $knopfSeiteVersion ->addFunktion("onclick", "website.verwaltung.seiten.setzen.version.fragen({$this->seite["id"]}, 'n', '{$this->seite["sprache"]}')");
+    }
+
+    if($DSH_BENUTZER->hatRecht("website.seiten.bearbeiten")) {
+      if($this->seite["status"] == "i") {
+        $knopfSeiteStatus = new UI\GrossIconKnopf(new UI\Icon("fas fa-toggle-off"), "Aktivieren", "Erfolg");
+        $knopfSeiteStatus ->addFunktion("onclick", "website.verwaltung.seiten.setzen.status({$this->seite["id"]}, 'a').then(_ => core.neuladen())");
+      } else {
+        $knopfSeiteStatus = new UI\GrossIconKnopf(new UI\Icon("fas fa-toggle-on"), "Deaktivieren", "Warnung");
+        $knopfSeiteStatus ->addFunktion("onclick", "website.verwaltung.seiten.setzen.status({$this->seite["id"]}, 'i').then(_ => core.neuladen())");
+      }
+
+      $knopfSeiteBearbeiten = new UI\GrossIconKnopf(new UI\Icon(UI\Konstanten::BEARBEITEN), "Seite bearbeiten");
+      $knopfSeiteBearbeiten ->addFunktion("onclick", "website.verwaltung.seiten.bearbeiten.fenster({$this->seite["id"]})");
+    }
+    if($DSH_BENUTZER->hatRecht("website.seiten.löschen")) {
+      $knopfSeiteLoeschen   = new UI\GrossIconKnopf(new UI\Icon(UI\Konstanten::LOESCHEN), "Seite löschen", "Fehler");
+      $knopfSeiteLoeschen   ->addFunktion("onclick", "website.verwaltung.seiten.loeschen.fragen({$this->seite["id"]})");
+    }
+
+    ${"knopf".ucfirst($this->seite["modus"])}->addKlasse("dshUiKnopfErfolg");
+    ${"knopf".ucfirst($this->seite["version"])}->addKlasse("dshUiKnopfErfolg");
+    $aktionenModus      = (new UI\Box(new UI\Ueberschrift("3", "Modus"), $knopfSehen, $knopfBearbeiten))->addKlasse("modus");
+    $aktionenVersion    = (new UI\Box(new UI\Ueberschrift("3", "Version"), $knopfAlt, $knopfAktuell, $knopfNeu))->addKlasse("version");
+    $aktionenAktionen   = (new UI\Box(new UI\Ueberschrift("3", "Aktionen"), $knopfSeiteVersion, $knopfSeiteStatus, $knopfSeiteBearbeiten, $knopfSeiteLoeschen))->addKlasse("aktionen");
+
+    $aktionen = new UI\Box();
+    if(count($aktionenModus->getKinder()) > 1) {
+      $aktionen[] = $aktionenModus;
+    }
+    if(count($aktionenVersion->getKinder()) > 1) {
+      $aktionen[] = $aktionenVersion;
+    }
+    if(count($aktionenAktionen->getKinder()) > 1) {
+      $aktionen[] = $aktionenAktionen;
+    }
+    $aktionen->setID("dshWebsiteBearbeitenAktionen");
+    if(count($aktionen->getKinder()) > 0) {
+      $spalte[] = $aktionen;
+    }
+    return $spalte;
   }
 
   public function __toString() : string {
-    global $DBS, $DSH_URL, $DSH_BENUTZER, $WEBSITE_URL, $versionen, $modi, $startseite, $WEBSITE_URL, $DSH_STANDARDSPRACHE, $DSH_SEITENPFAD, $standardversion, $standardmodus, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS;
+    global $DBS, $DSH_URL, $DSH_BENUTZER, $WEBSITE_URL, $DSH_SEITENMODI, $DSH_SEITENVERSIONEN;
     $code = "";
 
-    $ver = array_search($DSH_SEITENVERSION, ["alt", "aktuell", "neu"]);
-    $mod = array_search($DSH_SEITENMODUS, ["sehen", "bearbeiten"]);
-
-    // Brotkrumen
-    $brotkrumen = [];
-    if($this->fehler !== false) {
+    if($this->seite["id"] === null) {
       // Fehlerseite -> Brotkrumen aus Pfad, Titel auf Fehler
-      $this->titel = $this->fehler;
+      $this->titel = $this->seite["fehler"];
 
+      $brotkrumen = [];
       $pfad = "";
-      foreach($DSH_SEITENPFAD as $i => $seg) {
-        $seg = Kern\Texttrafo::url2text($seg);
-        if($i === count($DSH_SEITENPFAD)-1) {
+      foreach($this->seite["pfad"] as $i => $seg) {
+        $pf  = $seg;
+        $bez = Kern\Texttrafo::url2text($seg);
+        $extra = "";
+        if($i === count($this->seite["pfad"])-1) {
           // Letzte Seite
-          $extra = [];
-          if($ver !== $standardversion) {
-            $extra[] = $versionen[$DSH_SPRACHE][$ver];
+          $ex = [];
+          if($this->seite["version"] !== STANDARDVERSION) {
+            $ex[] = $DSH_SEITENVERSIONEN[$this->seite["sprache"]][$this->seite["version"]];
           }
-          if($mod !== $standardmodus) {
-            $extra[] = $modi[$DSH_SPRACHE][$mod];
+          if($this->seite["modus"] !== STANDARDMODUS) {
+            $ex[] = $DSH_SEITENMODI[$this->seite["sprache"]][$this->seite["modus"]];
           }
-          $klammer = "";
-          if(count($extra) > 0) {
-            $klammer = " (".join(", ", $extra).")";
+          if(count($ex) > 0) {
+            $extra = " (".join(", ", $ex).")";
           }
-
-          $brotkrumen = array_merge($brotkrumen, array("$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$seg" => "$seg$klammer"));
-        } else {
-          $brotkrumen = array_merge($brotkrumen, array("$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$seg" => $seg));
-          $pfad .= "$seg/";
         }
+        $brotkrumen["{$this->meta()}/$pfad$pf"] = "$bez$extra";
+        $pfad .= "$pf/";
       }
 
       $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
 
-      $DBS->anfrage("SELECT {IF(titel IS NULL, (SELECT titel FROM website_fehlermeldungen as wfms WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) AND wfms.fehler = wfm.fehler), titel)}, {IF(inhalt IS NULL, (SELECT inhalt FROM website_fehlermeldungen as wfms WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) AND wfms.fehler = wfm.fehler), inhalt)} FROM website_fehlermeldungen as wfm WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = [?]) AND fehler = ?", "ss", $DSH_SPRACHE, $this->fehler)
+      $DBS->anfrage("SELECT {IF(titel IS NULL, (SELECT titel FROM website_fehlermeldungen as wfms WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) AND wfms.fehler = wfm.fehler), titel)}, {IF(inhalt IS NULL, (SELECT inhalt FROM website_fehlermeldungen as wfms WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) AND wfms.fehler = wfm.fehler), inhalt)} FROM website_fehlermeldungen as wfm WHERE sprache = ? AND fehler = ?", "is", $this->seite["spracheI"], $this->seite["fehler"])
         ->werte($ftitel, $finhalt);
 
       $code .= UI\Zeile::standard(new UI\Meldung("$ftitel", "$finhalt", "Fehler"));
       return $code;
     }
+
     // Kein Fehler -> Brotkrumen aus Bezeichnungen + Pfaden generieren, Titel aus Bezeichnung
 
     if(Kern\Check::angemeldet() && $DSH_BENUTZER->hatRecht("website.inhalte.versionen.[|alt,neu].[|sehen,aktivieren] || website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
-      $DBS->anfrage("SELECT status FROM website_seiten WHERE id = ?", "i", $this->seitenId)
-            ->werte($status);
-
       // Website bearbeiten
-      $spalte = new UI\Spalte("A1");
-      if($status == "i") {
-        $spalte[] = new UI\Meldung("Inaktiv", "Die Seite ist inaktiv. Sie kann nicht /* @TODO: Meldung */", "Warnung", new UI\Icon("fas fa-eye-slash"));
-      }
-      $spalte ->addKlasse("dshWebsiteBearbeitenSpalte");
-
-      $balken = new UI\Balken("Zeit", time(), $DSH_BENUTZER->getSessiontimeout(), false, $DSH_BENUTZER->getInaktivitaetszeit());
-      $balken ->setID("dshWebsiteBearbeitenAktivitaet");
-      $spalte[] = $balken;
-      $spalte[] = "<script>kern.schulhof.nutzerkonto.aktivitaetsanzeige.hinzufuegen('dshWebsiteBearbeitenAktivitaet');</script>";
-      $pfad     = join("/", $DSH_SEITENPFAD);
-
-      // Variablen setzen (Falls Recht nicht vergeben)
-      $knopfSehen = $knopfBearbeiten = $knopfAlt = $knopfAktuell = $knopfNeu = $knopfSeiteVersion = $knopfSeiteStatus = $knopfSeiteBearbeiten = $knopfSeiteLoeschen = null;
-
-      $pfversion = "";
-      if($ver !== $standardversion) {
-        $pfversion = "{$versionen[$DSH_SPRACHE][$ver]}/";
-      }
-      $pfsprache = "";
-      if($pfversion != "" || $DSH_SPRACHE !== $DSH_STANDARDSPRACHE) {
-        $pfsprache = "$DSH_SPRACHE/";
-      }
-
-      $knopfSehen           = new UI\GrossIconKnopf(new UI\Icon("fas fa-binoculars"), "Betrachten");
-      $knopfSehen           ->addFunktion("href", "$pfsprache$pfversion$pfad");
-      if($DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
-        $knopfBearbeiten      = new UI\GrossIconKnopf(new UI\Icon(UI\Konstanten::BEARBEITEN), "Bearbeiten");
-        $knopfBearbeiten      ->addFunktion("href", "$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][1]}/$pfad");
-      }
-      switch($DSH_SEITENMODUS) {
-        case "sehen":
-          $knopfSehen       ->addKlasse("dshUiKnopfErfolg");
-          break;
-        case "bearbeiten":
-          $knopfBearbeiten  ->addKlasse("dshUiKnopfErfolg");
-          break;
-      }
-
-      $pfmodus = "";
-      if($mod !== $standardmodus) {
-        $pfmodus = "{$modi[$DSH_SPRACHE][$mod]}/";
-      }
-
-      if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.alt.sehen")) {
-        $knopfAlt         = new UI\GrossIconKnopf(new UI\Icon("fas fa-hourglass-end"),   "Alte Daten");
-        $knopfAlt         ->addFunktion("href", "$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][0]}/$pfmodus$pfad");
-      }
-      $knopfAktuell     = new UI\GrossIconKnopf(new UI\Icon("fas fa-hourglass-half"),  "Aktuelle Daten");
-      $knopfAktuell     ->addFunktion("href", "$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][1]}/$pfmodus$pfad");
-      if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.sehen")) {
-        $knopfNeu         = new UI\GrossIconKnopf(new UI\Icon("fas fa-hourglass-start"), "Neue Daten");
-        $knopfNeu         ->addFunktion("href", "$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][2]}/$pfmodus$pfad");
-      }
-      switch($DSH_SEITENVERSION) {
-        case "alt":
-          $knopfAlt     ->addKlasse("dshUiKnopfErfolg");
-          break;
-        case "aktuell":
-          $knopfAktuell ->addKlasse("dshUiKnopfErfolg");
-          break;
-        case "neu":
-          $knopfNeu     ->addKlasse("dshUiKnopfErfolg");
-          break;
-      }
-
-      $knopfSeiteVersion = null;
-      if($DSH_SEITENVERSION == "alt" && $DSH_BENUTZER->hatRecht("website.inhalte.versionen.alt.aktivieren")) {
-        $knopfSeiteVersion = new UI\GrossIconKnopf(new UI\Icon("fas fa-history fa-flip-horizontal"), "Daten wiederherstellen", "Warnung");
-        $knopfSeiteVersion ->addFunktion("onclick", "website.verwaltung.seiten.setzen.version.fragen({$this->seitenId}, 'a', '$DSH_SPRACHE')");
-      }
-      if($DSH_SEITENVERSION == "neu" && $DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.aktivieren")) {
-        $knopfSeiteVersion = new UI\GrossIconKnopf(new UI\Icon("fas fa-check-double"), "Daten freigeben", "Erfolg");
-        $knopfSeiteVersion ->addFunktion("onclick", "website.verwaltung.seiten.setzen.version.fragen({$this->seitenId}, 'n', '$DSH_SPRACHE')");
-      }
-
-      if($DSH_BENUTZER->hatRecht("website.seiten.bearbeiten")) {
-        if($status == "i") {
-          $knopfSeiteStatus = new UI\GrossIconKnopf(new UI\Icon("fas fa-toggle-off"), "Aktivieren", "Erfolg");
-          $knopfSeiteStatus ->addFunktion("onclick", "website.verwaltung.seiten.setzen.status({$this->seitenId}, 'a').then(_ => core.neuladen())");
-        } else {
-          $knopfSeiteStatus = new UI\GrossIconKnopf(new UI\Icon("fas fa-toggle-on"), "Deaktivieren", "Warnung");
-          $knopfSeiteStatus ->addFunktion("onclick", "website.verwaltung.seiten.setzen.status({$this->seitenId}, 'i').then(_ => core.neuladen())");
-        }
-
-        $knopfSeiteBearbeiten = new UI\GrossIconKnopf(new UI\Icon(UI\Konstanten::BEARBEITEN), "Seite bearbeiten");
-        $knopfSeiteBearbeiten ->addFunktion("onclick", "website.verwaltung.seiten.bearbeiten.fenster({$this->seitenId})");
-      }
-      if($DSH_BENUTZER->hatRecht("website.seiten.löschen")) {
-        $knopfSeiteLoeschen   = new UI\GrossIconKnopf(new UI\Icon(UI\Konstanten::LOESCHEN), "Seite löschen", "Fehler");
-        $knopfSeiteLoeschen   ->addFunktion("onclick", "website.verwaltung.seiten.loeschen.fragen({$this->seitenId})");
-      }
-
-      $aktionenModus      = (new UI\Box(new UI\Ueberschrift("3", "Modus"), $knopfSehen, $knopfBearbeiten))->addKlasse("modus");
-      $aktionenVersion    = (new UI\Box(new UI\Ueberschrift("3", "Version"), $knopfAlt, $knopfAktuell, $knopfNeu))->addKlasse("version");
-      $aktionenAktionen   = (new UI\Box(new UI\Ueberschrift("3", "Aktionen"), $knopfSeiteVersion, $knopfSeiteStatus, $knopfSeiteBearbeiten, $knopfSeiteLoeschen))->addKlasse("aktionen");
-
-      $aktionen = new UI\Box();
-      if(count($aktionenModus->getKinder()) > 1) {
-        $aktionen[] = $aktionenModus;
-      }
-      if(count($aktionenVersion->getKinder()) > 1) {
-        $aktionen[] = $aktionenVersion;
-      }
-      if(count($aktionenAktionen->getKinder()) > 1) {
-        $aktionen[] = $aktionenAktionen;
-      }
-      $aktionen->setID("dshWebsiteBearbeitenAktionen");
-      if(count($aktionen->getKinder()) > 0) {
-        $spalte[] = $aktionen;
-      }
-      $code .= new UI\Zeile($spalte);
+      $code .= new UI\Zeile($this->genBearbeiten());
     }
 
-    $zug = $this->seitenId;
+    $zug = $this->seite["id"];
     $pfadBez = [];
-    while($DBS->anfrage("SELECT ws.zugehoerig, {(SELECT IF(wsd.bezeichnung IS NULL, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung))}, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE ws.id = ? AND wsp.a2 = [?]", "is", $zug, $DSH_SPRACHE)->werte($zug, $segB, $segP)) {
+    while($DBS->anfrage("SELECT ws.zugehoerig, {(SELECT IF(wsd.bezeichnung IS NULL, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung))}, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE ws.id = ? AND wsp.a2 = [?]", "is", $zug, $this->seite["sprache"])->werte($zug, $segB, $segP)) {
       $pfadBez[] = [$segP, $segB];
     }
-
     $pfadBez = array_reverse($pfadBez);
-    $pfadBez = Kern\Texttrafo::url2text($pfadBez);
+
     $pfad = "";
     foreach($pfadBez as $i => $seg) {
       $pf   = $seg[0];
       $bez  = $seg[1];
+      $extra = "";
       if($i === count($pfadBez)-1) {
         // Letzte Seite
-        $extra = [];
-        if($DSH_SPRACHE !== $DSH_STANDARDSPRACHE) {
-          $DBS->anfrage("SELECT {name} FROM website_sprachen WHERE a2 = [?]", "s", $DSH_SPRACHE)
+        $ex = [];
+        if($this->seite["sprache"] != STANDARDSPRACHE) {
+          $DBS->anfrage("SELECT {name} FROM website_sprachen WHERE a2 = [?]", "s", $this->seite["sprache"])
                 ->werte($name);
-          $extra[] = Kern\Texttrafo::url2text($name);
+          $ex[] = Kern\Texttrafo::url2text($name);
         }
-        if($ver !== $standardversion) {
-          $extra[] = Kern\Texttrafo::url2text($versionen[$DSH_SPRACHE][$ver]);
+        if($this->seite["version"] != STANDARDVERSION) {
+          $ex[] = Kern\Texttrafo::url2text($DSH_SEITENVERSIONEN[$this->seite["sprache"]][$this->seite["version"]]);
         }
-        if($mod !== $standardmodus) {
-          $extra[] = Kern\Texttrafo::url2text($modi[$DSH_SPRACHE][$mod]);
+        if($this->seite["modus"] != STANDARDMODUS) {
+          $ex[] = Kern\Texttrafo::url2text($DSH_SEITENMODI[$this->seite["sprache"]][$this->seite["modus"]]);
         }
-        $DBS->anfrage("SELECT status FROM website_seiten WHERE id = ?", "i", $this->seitenId)
-              ->werte($status);
-        if($status == "i") {
+
+        if($this->seite["status"] == "i") {
           $extra[] = "Inaktiv";
         }
-        $klammer = "";
-        if(count($extra) > 0) {
-          $klammer = " (".join(", ", $extra).")";
+        if(count($ex) > 0) {
+          $extra = " (".join(", ", $ex).")";
         }
 
         $this->titel = $bez;
 
-        $brotkrumen = array_merge($brotkrumen, array("$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$pf" => "$bez$klammer"));
-      } else {
-        $brotkrumen = array_merge($brotkrumen, array("$DSH_SPRACHE/{$versionen[$DSH_SPRACHE][$ver]}/{$modi[$DSH_SPRACHE][$mod]}/$pfad$pf" => $bez));
-        $pfad .= "$pf/";
       }
+      $brotkrumen["{$this->meta()}/$pfad$pf"] = "$bez$extra";
+      $pfad .= "$pf/";
     }
     $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
 
-    $elemente = array();
+    $elemente = [];
 
     // Alle Elemente sammeln
-    new Kern\Wurmloch("funktionen/website/elemente.php", array(), function($r) use (&$elemente) {
+    new Kern\Wurmloch("funktionen/website/elemente.php", [], function($r) use (&$elemente) {
       $elemente = array_merge($elemente, $r);
     });
 
@@ -244,27 +254,27 @@ class Seite extends Kern\Seite {
     }
     $sqlS = join("UNION", $sql);
 
-    $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("i", count($sql)), array_fill(0, count($sql), $this->seitenId));
+    $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("i", count($sql)), array_fill(0, count($sql), $this->seite["id"]));
     $spalte  = new UI\Spalte("A1");
     while($inhalte->werte($typ, $id, $position, $status)) {
       // Elemente ausgeben
-      $element = new $elemente[$typ]($id, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
+      $element = new $elemente[$typ]($id, $this->seite["sprache"], $this->seite["version"], $this->seite["modus"]);
       if($element->anzeigen()) {
-        if($DSH_SEITENMODUS == "bearbeiten") {
+        if($this->seite["modus"] == "bearbeiten") {
           $neu = new UI\Box();
           $neu ->addKlasse("dshWebsiteNeuBalken");
           $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
           $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
-          $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', $position, {$this->seitenId})");
+          $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', $position, {$this->seite["id"]})");
           $neuMenue = new UI\Box($knopfEditorNeu);
 
           $spalte[] = $neu;
           $spalte[] = $neuMenue;
-          $element->addFunktion("onclick", "website.elemente.bearbeiten.fenster('$typ', $id, '$DSH_SPRACHE')");
+          $element->addFunktion("onclick", "website.elemente.bearbeiten.fenster('$typ', $id, '{$this->seite["sprache"]}')");
           $element->addKlasse("dshWebsiteBearbeitbar");
         }
         if($status == "i") {
-          if($DSH_SEITENMODUS == "bearbeiten" && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.bearbeiten")) {
+          if($this->seite["modus"] == "bearbeiten" && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.bearbeiten")) {
             $element  ->addKlasse("dshWebsiteBearbeitenInaktiv");
             $spalte[] = $element;
           }
@@ -273,12 +283,12 @@ class Seite extends Kern\Seite {
         }
       }
     }
-    if($DSH_SEITENMODUS == "bearbeiten") {
+    if($this->seite["modus"] == "bearbeiten") {
       $neu = new UI\Box();
       $neu ->addKlasse("dshWebsiteNeuBalken");
       $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
       $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
-      $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', ".($position+1).", {$this->seitenId})");
+      $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', ".($position+1).", {$this->seite["id"]})");
       $neuMenue = new UI\Box($knopfEditorNeu);
 
       $spalte[] = $neu;
@@ -286,38 +296,24 @@ class Seite extends Kern\Seite {
     }
     $code .= new UI\Zeile($spalte);
 
-    $sprachwahl = new UI\Auswahl("dshWebsiteSprache", $DSH_SPRACHE);
+    $sprachwahl = new UI\Auswahl("dshWebsiteSprache", $this->seite["sprache"]);
     $sprachwahl ->addFunktion("oninput", "website.seite.aendern.sprache()");
     $anf = $DBS->anfrage("SELECT {a2}, IF(namestandard = [''], {name}, CONCAT({name}, ' (', {namestandard}, ')')), id as bezeichnung FROM website_sprachen");
 
-    while($anf->werte($a2, $bez, $sprachId)) {
+    while($anf->werte($a2, $bez, $spracheI)) {
       $url = "";
-      $zug = $this->seitenId;
+      $zug = $this->seite["id"];
       // Pfad für die Sprache bestimmen
-      while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "ii", $sprachId, $zug)->werte($zid, $u)) {
+      while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "ii", $spracheI, $zug)->werte($zid, $u)) {
         $zug      = $zid;
         $url  = "$u/$url";
       }
       // Letze Bezeichnung bestimmen
-      $DBS->anfrage("SELECT {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = ?", "ii", $sprachId, $this->seitenId)
+      $DBS->anfrage("SELECT {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = ?", "ii", $spracheI, $this->seite["id"])
             ->werte($u);
       $url .= $u;
-      $infos = [];
-      if($a2 != $DSH_STANDARDSPRACHE || count($DSH_URL) > count($DSH_SEITENPFAD) + 1) {
-        $infos[] = $a2;
-      }
-      if(count($DSH_URL) >= count($DSH_SEITENPFAD) + 2) {
-        $infos[] = $versionen[$a2][$ver];
-      }
-      if(count($DSH_URL) >= count($DSH_SEITENPFAD) + 3) {
-        $infos[] = $modi[$a2][$mod];
-      }
-      $infos = join("/", $infos);
-      if(strlen($infos) > 0) {
-        $infos .= "/";
-      }
       $url = Kern\Texttrafo::text2url($url);
-      $sprachwahl->add($bez, "$infos$url", $DSH_SPRACHE == $a2);
+      $sprachwahl->add($bez, "{$this->meta($a2)}/$url", $this->seite["sprache"] == $a2);
     }
     $sprachwahl->addKlasse("dshUiEingabefeldKlein");
     $sprachwahl->setStyle("float", "right");
@@ -330,30 +326,30 @@ class Seite extends Kern\Seite {
   public static function vonPfad($sprache, $pfad, $version, $modus) : \Kern\Seite {
     global $DBS, $DSH_BENUTZER;
 
+    $meta = [
+      "sprache" => $sprache,
+      "version" => $version,
+      "modus"   => $modus,
+      "pfad"    => $pfad
+    ];
+
     // Pfad auflösen
-    $DBS->anfrage("SELECT id, {fehler} FROM website_sprachen WHERE a2 = [?]", "s", $sprache)
-          ->werte($sprachenId, $fehler);
-    $fehler = Kern\Texttrafo::text2url($fehler);
+    $DBS->anfrage("SELECT id FROM website_sprachen WHERE a2 = [?]", "s", $sprache)
+          ->werte($spracheI);
 
-    if($pfad[0] === $fehler) {
-      // Fehlerseite
-      return new Seite(-1, "404");
-    }
-
-
-    $seitenId = null;
+    $seiteI = null;
     $pfadTrav = $pfad;
     while(count($pfadTrav) > 0) {
       $seg = array_shift($pfadTrav);
       $seg = Kern\Texttrafo::url2text($seg);
-      if($seitenId === null) {
-        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig IS NULL AND wsp.id = ? AND IF(wsd.pfad IS NULL, {IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung)} = ?, wsd.pfad = [?])", "iss", $sprachenId, $seg, $seg)->werte($seitenId)) {
-          $seitenId = null;
+      if($seiteI === null) {
+        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig IS NULL AND wsp.id = ? AND IF(wsd.pfad IS NULL, {IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung)} = ?, wsd.pfad = [?])", "iss", $spracheI, $seg, $seg)->werte($seiteI)) {
+          $seiteI = null;
           break;
         }
       } else {
-        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig = ? AND wsp.id = ? AND IF(wsd.pfad IS NULL, {IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung)} = ?, wsd.pfad = [?])", "iiss", $seitenId, $sprachenId, $seg, $seg)->werte($seitenId)) {
-          $seitenId = null;
+        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig = ? AND wsp.id = ? AND IF(wsd.pfad IS NULL, {IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung)} = ?, wsd.pfad = [?])", "iiss", $seiteI, $spracheI, $seg, $seg)->werte($seiteI)) {
+          $seiteI = null;
           break;
         }
       }
@@ -363,18 +359,22 @@ class Seite extends Kern\Seite {
       $sqlStatus = " AND status = 'a'";
     }
 
-    if($seitenId !== null && !$DBS->existiert("website_seiten", "id = ?$sqlStatus", "i", $seitenId)) {
-      $seitenId = null;
+    if($seiteI !== null && !$DBS->existiert("website_seiten", "id = ?$sqlStatus", "i", $seiteI)) {
+      $seiteI = null;
     }
 
-    if($seitenId === null) {
+    if($seiteI === null) {
       // Seite nicht gefunden
-      return self::vonPfad($sprache, [$fehler, "404"], 1, 0);
+      return new Seite(array_merge($meta, [
+        "id"      => null,
+        "fehler"  => "404"
+      ]));
     }
 
     // Seite ist gültig
-
-    return new Seite($seitenId);
+    return new Seite(array_merge($meta, [
+      "id"      => $seiteI,
+    ]));
   }
 }
 

@@ -27,32 +27,37 @@ use Kern;
  */
 
 // Global machen
-global $versionen, $modi, $startseite, $standardversion, $standardmodus, $DSH_STANDARDSPRACHE, $WEBSITE_URL, $DSH_SPRACHE, $DSH_SEITENVERSION, $DSH_SEITENMODUS, $DSH_SEITENPFAD;
+global $DSH_SPRACHEN, $DSH_SEITENVERSIONEN, $DSH_SEITENMODI, $DSH_STARTSEITE, $WEBSITE_URL;
 
-$DSH_STANDARDSPRACHE = \Kern\Einstellungen::laden("Website", "Standardsprache");
+define("Website\STANDARDSPRACHE", \Kern\Einstellungen::laden("Website", "Standardsprache"));
 
-$DSH_SPRACHEN = [];
-$versionen    = [];
-$modi         = [];
-$startseite   = [];
+$DSH_SPRACHEN         = [];
+$DSH_SEITENVERSIONEN  = [];
+$DSH_SEITENMODI       = [];
+$DSH_STARTSEITE       = [];
 
 // Startseite nimmt, wenn vorhanden den Pfad der Sprache, ansonsten Fallback der Standardsprache
-$anf = $DBS->anfrage("SELECT {a2}, {name}, {namestandard}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = wsd.seite AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad) FROM website_seitendaten as wsd WHERE wsd.sprache = wsp.id AND wsd.seite = (SELECT id FROM website_seiten WHERE startseite = 1))} FROM website_sprachen as wsp");
-while($anf->werte($a2, $name, $namestd, $alt, $aktuell, $neu, $sehen, $bearbeiten, $s)) {
-  $DSH_SPRACHEN [$a2] = [$name, $namestd];
-  $versionen    [$a2] = [$alt, $aktuell, $neu];
-  $modi         [$a2] = [$sehen, $bearbeiten];
-  $startseite   [$a2] = $s;
+$anf = $DBS->anfrage("SELECT {a2}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = wsd.seite AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad) FROM website_seitendaten as wsd WHERE wsd.sprache = wsp.id AND wsd.seite = (SELECT id FROM website_seiten WHERE startseite = 1))} FROM website_sprachen as wsp");
+while($anf->werte($a2, $alt, $aktuell, $neu, $sehen, $bearbeiten, $s)) {
+  $DSH_SPRACHEN         []    = $a2;
+  $DSH_SEITENVERSIONEN  [$a2] = array(
+    "alt"             => $alt,
+    "aktuell"         => $aktuell,
+    "neu"             => $neu);
+  $DSH_SEITENMODI       [$a2] = array(
+    "sehen"           => $sehen,
+    "bearbeiten"      => $bearbeiten);
+  $DSH_STARTSEITE       [$a2] = $s;
 }
 
-$DSH_SPRACHEN = Kern\Texttrafo::text2url($DSH_SPRACHEN);
-$versionen    = Kern\Texttrafo::text2url($versionen);
-$modi         = Kern\Texttrafo::text2url($modi);
-$startseite   = Kern\Texttrafo::text2url($startseite);
-$WEBSITE_URL = [];
+$DSH_SPRACHEN         = Kern\Texttrafo::text2url($DSH_SPRACHEN);
+$DSH_SEITENVERSIONEN  = Kern\Texttrafo::text2url($DSH_SEITENVERSIONEN);
+$DSH_SEITENMODI       = Kern\Texttrafo::text2url($DSH_SEITENMODI);
+$DSH_STARTSEITE       = Kern\Texttrafo::text2url($DSH_STARTSEITE);
+$WEBSITE_URL          = [];
 
-$standardmodus = 0;
-$standardversion = 1;
+const STANDARDMODUS    = "sehen";
+const STANDARDVERSION  = "aktuell";
 
 // Sprache/Version/Modus/Seiten..
 
@@ -61,15 +66,15 @@ if($url[0] === "") {
   array_shift($url);
 }
 if(count($url) > 0) {
-  if(in_array($url[0], array_keys($DSH_SPRACHEN))) {
+  if(in_array($url[0], $DSH_SPRACHEN)) {
     // Sprache gegeben
     $WEBSITE_URL[0] = $url[0];
     if(count($url) > 1) {
-      if(in_array($url[1], $versionen[$WEBSITE_URL[0]])) {
+      if(in_array($url[1], $DSH_SEITENVERSIONEN[$WEBSITE_URL[0]])) {
         // Version gegeben
         $WEBSITE_URL[1] = $url[1];
         if(count($url) > 2) {
-          if(in_array($url[2], $modi[$WEBSITE_URL[0]])) {
+          if(in_array($url[2], $DSH_SEITENMODI[$WEBSITE_URL[0]])) {
             // Modus gegeben
             $WEBSITE_URL[2] = $url[2];
             if(count($url) > 3) {
@@ -82,59 +87,52 @@ if(count($url) > 0) {
               $WEBSITE_URL = array_merge($WEBSITE_URL, $url);
             } else {
               // Sprache, Version, Modus, keine Seite
-              $WEBSITE_URL = array_merge($WEBSITE_URL, [$startseite[$WEBSITE_URL[0]]]);
+              $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STARTSEITE[$WEBSITE_URL[0]]]);
             }
           } else {
             // Sprache, Version, Seite
             array_shift($url);
             array_shift($url);
-            $WEBSITE_URL = array_merge($WEBSITE_URL, [$modi[$WEBSITE_URL[0]][$standardmodus]], $url);
+            $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_SEITENMODI[$WEBSITE_URL[0]][STANDARDMODUS]], $url);
           }
         } else {
           // Sprache, Version, keine Seite
-          $WEBSITE_URL = array_merge($WEBSITE_URL, [$modi[$WEBSITE_URL[0]][$standardmodus]], [$startseite[$WEBSITE_URL[0]]]);
+          $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_SEITENMODI[$WEBSITE_URL[0]][STANDARDMODUS]], [$DSH_STARTSEITE[$WEBSITE_URL[0]]]);
         }
       } else {
         // Sprache, Seite
         array_shift($url);
-        $WEBSITE_URL = array_merge($WEBSITE_URL, [$versionen[$WEBSITE_URL[0]][$standardversion], $modi[$WEBSITE_URL[0]][$standardmodus]], $url);
+        $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_SEITENVERSIONEN[$WEBSITE_URL[0]][STANDARDVERSION], $DSH_SEITENMODI[$WEBSITE_URL[0]][STANDARDMODUS]], $url);
       }
     } else {
       // Nur Sprache, keine Seite
-      $WEBSITE_URL = array_merge($WEBSITE_URL, [$versionen[$WEBSITE_URL[0]][$standardversion], $modi[$WEBSITE_URL[0]][$standardmodus]], [$startseite[$WEBSITE_URL[0]]]);
+      $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_SEITENVERSIONEN[$WEBSITE_URL[0]][STANDARDVERSION], $DSH_SEITENMODI[$WEBSITE_URL[0]][STANDARDMODUS]], [$DSH_STARTSEITE[$WEBSITE_URL[0]]]);
     }
   } else {
     // Seite
-    $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STANDARDSPRACHE, $versionen[$DSH_STANDARDSPRACHE][$standardversion], $modi[$DSH_STANDARDSPRACHE][$standardmodus]], $url);
+    $WEBSITE_URL = array_merge($WEBSITE_URL, [STANDARDSPRACHE, $DSH_SEITENVERSIONEN[STANDARDSPRACHE][STANDARDVERSION], $DSH_SEITENMODI[STANDARDSPRACHE][STANDARDMODUS]], $url);
   }
 } else {
   // keine Seite
-  $DSH_URL = [$startseite[$DSH_STANDARDSPRACHE]];
-  $WEBSITE_URL = array_merge($WEBSITE_URL, [$DSH_STANDARDSPRACHE, $versionen[$DSH_STANDARDSPRACHE][$standardversion], $modi[$DSH_STANDARDSPRACHE][$standardmodus], $startseite[$DSH_STANDARDSPRACHE]]);
+  $DSH_URL = [$DSH_STARTSEITE[STANDARDSPRACHE]];
+  $WEBSITE_URL = array_merge($WEBSITE_URL, [STANDARDSPRACHE, $DSH_SEITENVERSIONEN[STANDARDSPRACHE][STANDARDVERSION], $DSH_SEITENMODI[STANDARDSPRACHE][STANDARDMODUS], $DSH_STARTSEITE[STANDARDSPRACHE]]);
 }
 
-$DSH_SPRACHE        = $WEBSITE_URL[0];                                          // Sprachkürzel
-$DSH_SEITENVERSION  = array_search($WEBSITE_URL[1], $versionen[$DSH_SPRACHE]);
-$DSH_SEITENMODUS    = array_search($WEBSITE_URL[2], $modi[$DSH_SPRACHE]);
+$sprache  = $WEBSITE_URL[0];
+$version  = array_search($WEBSITE_URL[1], $DSH_SEITENVERSIONEN[$sprache]);
+$modus    = array_search($WEBSITE_URL[2], $DSH_SEITENMODI[$sprache]);
 
-$DSH_SEITENVERSION  = ["alt", "aktuell", "neu"][$DSH_SEITENVERSION];
-$DSH_SEITENMODUS    = ["sehen", "bearbeiten"][$DSH_SEITENMODUS];
-
-if(in_array($DSH_SEITENVERSION, ["alt", "neu"])) {
-  if(!Kern\Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.versionen.$DSH_SEITENVERSION.sehen")) {
+if(in_array($version, ["alt", "neu"])) {
+  if(!Kern\Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.versionen.$version.sehen")) {
     \Seite::seiteAus("Fehler/403");
   }
 }
 
-if($DSH_SEITENMODUS == "bearbeiten") {
+if($modus == "bearbeiten") {
   if(!Kern\Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
     \Seite::seiteAus("Fehler/403");
   }
 }
-
-$url = $WEBSITE_URL;
-$DSH_SEITENPFAD     = array_splice($url, 3);
-
-// Website/Sprache/Version/Modus/Seiten..
-$SEITE = Seite::vonPfad($DSH_SPRACHE, $DSH_SEITENPFAD, $DSH_SEITENVERSION, $DSH_SEITENMODUS);
+$pfad = array_splice($WEBSITE_URL, 3);
+$SEITE = Seite::vonPfad($sprache, $pfad, $version, $modus);
 ?>
