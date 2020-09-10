@@ -8,13 +8,16 @@ if(!$DBS->existiert("website_sprachen", "a2 = [?]", "s", $sprache)) {
   Anfrage::addFehler(-3, true);
 }
 
-if(!UI\Check::istText($titel403)) {
+$DBS->anfrage("SELECT IF((SELECT a2 FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) = [?], 1, 0)", "s", $sprache)
+      ->werte($min);
+
+if(!UI\Check::istText($titel403, $min)) {
   Anfrage::addFehler(21);
 }
 if(!UI\Check::istEditor($inhalt403)) {
   Anfrage::addFehler(22);
 }
-if(!UI\Check::istText($titel404)) {
+if(!UI\Check::istText($titel404, $min)) {
   Anfrage::addFehler(21);
 }
 if(!UI\Check::istEditor($inhalt404)) {
