@@ -79,8 +79,8 @@ switch ($meldeid) {
       Anfrage::setRueck("Meldung", new UI\Meldung("Daten wiederherstellen", "Soll die Daten wirklich wiederhergestellt werden? Die aktuellen Daten werden dadurch überschrieben.", "Warnung"));
       $knoepfe[] = new UI\Knopf("Daten wiederherstellen", "Erfolg", "website.verwaltung.seiten.setzen.version.ausfuehren($id, 'a', '$sprache')");
     } else {
-      Anfrage::setRueck("Meldung", new UI\Meldung("Daten freigeben", "Soll die Daten wirklich freigegeben werden?", "Warnung"));
-      $knoepfe[] = new UI\Knopf("Daten freigeben", "Erfolg", "website.verwaltung.seiten.setzen.version.ausfuehren($id, 'n', '$sprache')");
+      Anfrage::setRueck("Meldung", new UI\Meldung("Daten aktivieren", "Soll die Daten wirklich aktiviert werden?", "Warnung"));
+      $knoepfe[] = new UI\Knopf("Daten aktivieren", "Erfolg", "website.verwaltung.seiten.setzen.version.ausfuehren($id, 'n', '$sprache')");
     }
     $knoepfe[] = UI\Knopf::abbrechen();
     Anfrage::setRueck("Knöpfe", $knoepfe);
@@ -90,7 +90,7 @@ switch ($meldeid) {
     if($version == "a") {
       Anfrage::setRueck("Meldung", new UI\Meldung("Daten wiederherstellen", "Die alten Daten wurden wiederhergestellt.", "Erfolg"));
     } else {
-      Anfrage::setRueck("Meldung", new UI\Meldung("Daten freigeben", "Die neuen Daten wurden freigegeben.", "Erfolg"));
+      Anfrage::setRueck("Meldung", new UI\Meldung("Daten aktivieren", "Die neuen Daten wurden aktiviert.", "Erfolg"));
     }
     $knoepfe[] = (UI\Knopf::ok())->addFunktion("onclick", "core.neuladen()");
     Anfrage::setRueck("Knöpfe", $knoepfe);
@@ -103,8 +103,9 @@ switch ($meldeid) {
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;
   case 17:
+    parameter("element", "id");
     Anfrage::setRueck("Meldung", new UI\Meldung("Element löschen", "Das Element wurde gelöscht.", "Erfolg"));
-    $knoepfe[] = (UI\Knopf::ok())->addFunktion("onclick", "core.neuladen()");
+    $knoepfe[] = (UI\Knopf::ok("dshWebsiteElementBearbeiten{$element}_$id"))->addFunktion("onclick", "core.neuladen()");
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;
   case 18:

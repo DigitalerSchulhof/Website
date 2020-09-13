@@ -32,4 +32,6 @@ if (!$DSH_BENUTZER->hatRecht("website.sprachen.fehlermeldungen")) {
 
 $DBS->datensatzBearbeiten("website_fehlermeldungen", "sprache = (SELECT id FROM website_sprachen WHERE a2 = [?]) AND fehler = '403'", array("titel" => "[?]", "inhalt" => "[?]"), "sss", $titel403, $inhalt403, $sprache);
 $DBS->datensatzBearbeiten("website_fehlermeldungen", "sprache = (SELECT id FROM website_sprachen WHERE a2 = [?]) AND fehler = '404'", array("titel" => "[?]", "inhalt" => "[?]"), "sss", $titel404, $inhalt404, $sprache);
+$DBS->anfrage("UPDATE website_fehlermeldungen SET titel = NULL WHERE titel = ['']");
+$DBS->anfrage("UPDATE website_fehlermeldungen SET inhalt = NULL WHERE inhalt = ['']");
 ?>

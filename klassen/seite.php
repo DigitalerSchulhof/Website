@@ -107,7 +107,7 @@ class Seite extends Kern\Seite {
       $knopfSeiteVersion ->addFunktion("onclick", "website.verwaltung.seiten.setzen.version.fragen({$this->seite["id"]}, 'a', '{$this->seite["sprache"]}')");
     }
     if($this->seite["version"] == "neu" && $DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.aktivieren")) {
-      $knopfSeiteVersion = new UI\GrossIconKnopf(new UI\Icon("fas fa-check-double"), "Daten freigeben", "Erfolg");
+      $knopfSeiteVersion = new UI\GrossIconKnopf(new UI\Icon("fas fa-check-double"), "Daten aktivieren", "Erfolg");
       $knopfSeiteVersion ->addFunktion("onclick", "website.verwaltung.seiten.setzen.version.fragen({$this->seite["id"]}, 'n', '{$this->seite["sprache"]}')");
     }
 
@@ -130,9 +130,12 @@ class Seite extends Kern\Seite {
 
     ${"knopf".ucfirst($this->seite["modus"])}->addKlasse("dshUiKnopfErfolg");
     ${"knopf".ucfirst($this->seite["version"])}->addKlasse("dshUiKnopfErfolg");
-    $aktionenModus      = (new UI\Box(new UI\Ueberschrift("3", "Modus"), $knopfSehen, $knopfBearbeiten))->addKlasse("modus");
-    $aktionenVersion    = (new UI\Box(new UI\Ueberschrift("3", "Version"), $knopfAlt, $knopfAktuell, $knopfNeu))->addKlasse("version");
-    $aktionenAktionen   = (new UI\Box(new UI\Ueberschrift("3", "Aktionen"), $knopfSeiteVersion, $knopfSeiteStatus, $knopfSeiteBearbeiten, $knopfSeiteLoeschen))->addKlasse("aktionen");
+    $aktionenModus      = new UI\Box(new UI\Ueberschrift("3", "Modus"), $knopfSehen, $knopfBearbeiten);
+    $aktionenModus      ->addKlasse("modus");
+    $aktionenVersion    = new UI\Box(new UI\Ueberschrift("3", "Version"), $knopfAlt, $knopfAktuell, $knopfNeu);
+    $aktionenVersion    ->addKlasse("version");
+    $aktionenAktionen   = new UI\Box(new UI\Ueberschrift("3", "Aktionen"), $knopfSeiteVersion, $knopfSeiteStatus, $knopfSeiteBearbeiten, $knopfSeiteLoeschen);
+    $aktionenAktionen   ->addKlasse("aktionen");
 
     $aktionen = new UI\Box();
     if(count($aktionenModus->getKinder()) > 1) {
@@ -152,8 +155,25 @@ class Seite extends Kern\Seite {
   }
 
   public function __toString() : string {
-    global $DBS, $DSH_URL, $DSH_BENUTZER, $WEBSITE_URL, $DSH_SEITENMODI, $DSH_SEITENVERSIONEN;
+    global $DBS, $DSH_BENUTZER, $DSH_SEITENMODI, $DSH_SEITENVERSIONEN;
     $code = "";
+
+    // Bearbeiten/Versionen Rechte-Check
+    if($this->seite["id"] !== null) {
+      if(in_array($this->seite["version"], ["alt", "neu"])) {
+        if(!Kern\Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.versionen.{$this->seite["version"]}.sehen")) {
+          $this->seite["id"]      = null;
+          $this->seite["fehler"]  = "403";
+        }
+      }
+
+      if(in_array($this->seite["modus"], ["bearbeiten"])) {
+        if(!Kern\Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
+          $this->seite["id"]      = null;
+          $this->seite["fehler"]  = "403";
+        }
+      }
+    }
 
     if($this->seite["id"] === null) {
       // Fehlerseite -> Brotkrumen aus Pfad, Titel auf Fehler
@@ -184,7 +204,12 @@ class Seite extends Kern\Seite {
 
       $code .= (new Kern\Aktionszeile())->setBrotkrumenPfad($brotkrumen);
 
-      $DBS->anfrage("SELECT {IF(titel IS NULL, (SELECT titel FROM website_fehlermeldungen as wfms WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) AND wfms.fehler = wfm.fehler), titel)}, {IF(inhalt IS NULL, (SELECT inhalt FROM website_fehlermeldungen as wfms WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) AND wfms.fehler = wfm.fehler), inhalt)} FROM website_fehlermeldungen as wfm WHERE sprache = ? AND fehler = ?", "is", $this->seite["spracheI"], $this->seite["fehler"])
+      /**
+       * @var string $ftitel
+       * @var string $finhalt
+       */
+
+      $DBS->anfrage("SELECT {COALESCE(titel, (SELECT titel FROM website_fehlermeldungen as wfms WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) AND wfms.fehler = wfm.fehler))}, {COALESCE(inhalt, (SELECT inhalt FROM website_fehlermeldungen as wfms WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)) AND wfms.fehler = wfm.fehler))} FROM website_fehlermeldungen as wfm WHERE sprache = ? AND fehler = ?", "is", $this->seite["spracheI"], $this->seite["fehler"])
         ->werte($ftitel, $finhalt);
 
       $code .= UI\Zeile::standard(new UI\Meldung("$ftitel", "$finhalt", "Fehler"));
@@ -198,9 +223,14 @@ class Seite extends Kern\Seite {
       $code .= new UI\Zeile($this->genBearbeiten());
     }
 
+
     $zug = $this->seite["id"];
     $pfadBez = [];
-    while($DBS->anfrage("SELECT ws.zugehoerig, {(SELECT IF(wsd.bezeichnung IS NULL, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung))}, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE ws.id = ? AND wsp.a2 = [?]", "is", $zug, $this->seite["sprache"])->werte($zug, $segB, $segP)) {
+    /**
+     * @var string $segB
+     * @var string $segP
+     */
+    while($DBS->anfrage("SELECT ws.zugehoerig, {(SELECT COALESCE(wsd.bezeichnung, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)))))}, {(SELECT COALESCE(wsd.pfad IS NULL, COALESCE(wsd.bezeichnung, (SELECT COALESCE(wsds.pfad, wsds.bezeichnung) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE ws.id = ? AND wsp.a2 = [?]", "is", $zug, $this->seite["sprache"])->werte($zug, $segB, $segP)) {
       $pfadBez[] = [$segP, $segB];
     }
     $pfadBez = array_reverse($pfadBez);
@@ -214,6 +244,9 @@ class Seite extends Kern\Seite {
         // Letzte Seite
         $ex = [];
         if($this->seite["sprache"] != STANDARDSPRACHE) {
+          /**
+           * @var string $name
+           */
           $DBS->anfrage("SELECT {name} FROM website_sprachen WHERE a2 = [?]", "s", $this->seite["sprache"])
                 ->werte($name);
           $ex[] = Kern\Texttrafo::url2text($name);
@@ -248,24 +281,29 @@ class Seite extends Kern\Seite {
     });
 
     $sql = [];
-    $werte = [];
     foreach($elemente as $el => $c) {
-      $sql[] = "SELECT '$el' as typ, el.id as id, el.position as position, el.status as status FROM website_$el as el WHERE el.seite = ?";
+      $sql[] = "SELECT '$el' as typ, el.id as id, el.position as position, el.status as status FROM website__$el as el WHERE el.seite = ? AND el.sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])";
     }
     $sqlS = join("UNION", $sql);
 
-    $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("i", count($sql)), array_fill(0, count($sql), $this->seite["id"]));
+    $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("is", count($sql)), array_fill(0, count($sql), [$this->seite["id"], $this->seite["sprache"]]));
     $spalte  = new UI\Spalte("A1");
+    /**
+     * @var string $typ
+     * @var int $id
+     * @var int $position
+     * @var string $status
+     */
     while($inhalte->werte($typ, $id, $position, $status)) {
       // Elemente ausgeben
-      $element = new $elemente[$typ]($id, $this->seite["sprache"], $this->seite["version"], $this->seite["modus"]);
+      $element = new $elemente[$typ]($id, $this->seite["version"], $this->seite["modus"]);
       if($element->anzeigen()) {
         if($this->seite["modus"] == "bearbeiten") {
           $neu = new UI\Box();
           $neu ->addKlasse("dshWebsiteNeuBalken");
           $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
           $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
-          $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', $position, {$this->seite["id"]})");
+          $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', $position, {$this->seite["id"]}, '{$this->seite["sprache"]})");
           $neuMenue = new UI\Box($knopfEditorNeu);
 
           $spalte[] = $neu;
@@ -288,7 +326,7 @@ class Seite extends Kern\Seite {
       $neu ->addKlasse("dshWebsiteNeuBalken");
       $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
       $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
-      $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', ".($position+1).", {$this->seite["id"]})");
+      $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', ".($position+1).", {$this->seite["id"]}, '{$this->seite["sprache"]}')");
       $neuMenue = new UI\Box($knopfEditorNeu);
 
       $spalte[] = $neu;
@@ -300,16 +338,25 @@ class Seite extends Kern\Seite {
     $sprachwahl ->addFunktion("oninput", "website.seite.aendern.sprache()");
     $anf = $DBS->anfrage("SELECT {a2}, IF(namestandard = [''], {name}, CONCAT({name}, ' (', {namestandard}, ')')), id as bezeichnung FROM website_sprachen");
 
+    /**
+     * @var string $a2
+     * @var string $bez
+     * @var int $spracheI
+     */
     while($anf->werte($a2, $bez, $spracheI)) {
       $url = "";
       $zug = $this->seite["id"];
       // Pfad für die Sprache bestimmen
-      while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "ii", $spracheI, $zug)->werte($zid, $u)) {
+      /**
+       * @var string $zid
+       * @var string $u
+       */
+      while($DBS->anfrage("SELECT ws.id, {(SELECT COALESCE(wsd.pfad, COALESCE(wsd.bezeichnung, (SELECT COALESCE(wsds.pfad, wsds.bezeichnung) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "ii", $spracheI, $zug)->werte($zid, $u)) {
         $zug      = $zid;
         $url  = "$u/$url";
       }
       // Letze Bezeichnung bestimmen
-      $DBS->anfrage("SELECT {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = ?", "ii", $spracheI, $this->seite["id"])
+      $DBS->anfrage("SELECT {(SELECT COALESCE(wsd.pfad, COALESCE(wsd.bezeichnung, (SELECT COALESCE(wsds.pfad, wsds.bezeichnung) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = ? AND ws.id = ?", "ii", $spracheI, $this->seite["id"])
             ->werte($u);
       $url .= $u;
       $url = Kern\Texttrafo::text2url($url);
@@ -334,6 +381,9 @@ class Seite extends Kern\Seite {
     ];
 
     // Pfad auflösen
+    /**
+     * @var int $spracheI
+     */
     $DBS->anfrage("SELECT id FROM website_sprachen WHERE a2 = [?]", "s", $sprache)
           ->werte($spracheI);
 
@@ -343,12 +393,12 @@ class Seite extends Kern\Seite {
       $seg = array_shift($pfadTrav);
       $seg = Kern\Texttrafo::url2text($seg);
       if($seiteI === null) {
-        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig IS NULL AND wsp.id = ? AND IF(wsd.pfad IS NULL, {IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung)} = ?, wsd.pfad = [?])", "iss", $spracheI, $seg, $seg)->werte($seiteI)) {
+        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig IS NULL AND wsp.id = ? AND IF(wsd.pfad IS NULL, {COALESCE(wsd.bezeichnung, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))} = ?, wsd.pfad = [?])", "iss", $spracheI, $seg, $seg)->werte($seiteI)) {
           $seiteI = null;
           break;
         }
       } else {
-        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig = ? AND wsp.id = ? AND IF(wsd.pfad IS NULL, {IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung)} = ?, wsd.pfad = [?])", "iiss", $seiteI, $spracheI, $seg, $seg)->werte($seiteI)) {
+        if(!$DBS->anfrage("SELECT ws.id FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON ws.id = wsd.seite AND wsd.sprache = wsp.id WHERE ws.zugehoerig = ? AND wsp.id = ? AND IF(wsd.pfad IS NULL, {COALESCE(wsd.bezeichnung, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT wsp.id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))} = ?, wsd.pfad = [?])", "iiss", $seiteI, $spracheI, $seg, $seg)->werte($seiteI)) {
           $seiteI = null;
           break;
         }
@@ -363,7 +413,7 @@ class Seite extends Kern\Seite {
       $seiteI = null;
     }
 
-    if($seiteI === null) {
+    if($seiteI === null || (!(Kern\Check::angemeldet() && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) && !self::seiteSichtbar($seiteI, $sprache, $version))) {
       // Seite nicht gefunden
       return new Seite(array_merge($meta, [
         "id"      => null,
@@ -375,6 +425,49 @@ class Seite extends Kern\Seite {
     return new Seite(array_merge($meta, [
       "id"      => $seiteI,
     ]));
+  }
+
+  /**
+   * Gibt zurück, ob eine Seite mit einer Sprache sichtbar ist (Mind. ein Element mit Inhalt)
+   *
+   * @param int $id               Die ID der Seite
+   * @param string $sprache       Die A2-Kennung der Sprache
+   * @param string|null $version  Die Seitenversion
+   * Wenn <code>null</code>: Standardversion
+   * @return boolean
+   */
+  public static function seiteSichtbar($id, $sprache, $version = null) : bool {
+    global $DBS;
+    $version ??= STANDARDVERSION;
+
+    $elemente = [];
+    // Alle Elemente sammeln
+    new Kern\Wurmloch("funktionen/website/elemente.php", [], function ($r) use (&$elemente) {
+      $elemente = array_merge($elemente, $r);
+    });
+
+    $sql = [];
+    foreach ($elemente as $el => $c) {
+      $sql[] = "SELECT '$el' as typ, el.id as id, el.position as position, el.status as status FROM website__$el as el WHERE el.seite = ? AND el.sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])";
+    }
+    $sqlS = join("UNION", $sql);
+
+    $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("is", count($sql)), array_fill(0, count($sql), [$id, $sprache]));
+    $spalte  = new UI\Spalte("A1");
+    /**
+     * @var string $typ
+     * @var int $id
+     * @var int $position
+     * @var string $status
+     */
+    while ($inhalte->werte($typ, $id, $position, $status)) {
+      $elm = new $elemente[$typ]($id, $version, "sehen");
+      if($elm->anzeigen()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
 

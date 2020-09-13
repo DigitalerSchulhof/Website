@@ -5,6 +5,8 @@ use UI;
 abstract class Element extends UI\Element {
   protected $tag = "div";
 
+  protected const KEIN_INHALT = "Kein Inhalt oder gelöscht";
+
   /** @var int $id ID des Elementes */
   protected $eid;
   /** @var string $sprache A2-Kennung der Sprache */
@@ -15,18 +17,25 @@ abstract class Element extends UI\Element {
   protected $modus;
   /** @var array FELDER Felder, die JS sammeln und in die Anfrage packen soll */
   protected $felder;
-
+  /** @var string Die Tabelle, in welcher sich die Inhalte befinden. (Siehe: Readme) */
+  protected $tabelle;
   /**
    * Erzeugt ein neues Websiteelement und lädt dessen Daten
    * @param int $id         ID des Elementes
-   * @param string $sprache A2-Kennung der Sprache
    * @param string $version Version des Elementes (alt; aktuell; neu)
    * @param string $modus   Betrachtungsmodus (sehen; bearbeiten)
    * <i>Ist momentan nich in Gebrauch, jedoch der Vollständigeit halber, und für eventuellen künftigen Gebrauch, im Code gelassen</i>
+   * @param string|null $sprache A2-Kennung der Sprache
+   * Wenn <code>$id !== null</code>: Automatisch geladen
    */
-  public function __construct($id, $sprache, $version, $modus) {
+  public function __construct($id, $version, $modus, $sprache = null) {
     parent::__construct();
     $this->eid      = $id;
+    if($id !== null) {
+      global $DBS;
+      $DBS->anfrage("SELECT {a2} FROM website_sprachen WHERE id = (SELECT sprache FROM website__{$this->tabelle} WHERE id = ?)", "i", $id)
+            ->werte($sprache);
+    }
     $this->sprache  = $sprache;
     $this->version  = $version;
     $this->modus    = $modus;
@@ -75,17 +84,16 @@ abstract class Element extends UI\Element {
 
 
   /**
-   * Füllt die Variablen mit Inhalten aus der Datenbank
    * @param  string $tabelle      Tabelle, in welcher sich die Daten befinden, siehe <code>ELEMENT</code> im readme.
    * @param  mixed ...$variablen  Die Variablen, welche gefüllt werden. Die Reihenfolge <b>MUSS</b> der Reihenfolge in <code>Website\Element::$FELDER</code> entsprechen. Die Spaltennamen müssen den <i>keys</i> des Arrays entsprechen und mit je "alt", "aktuell", und "neu" enden.
    */
-  public function werteFuellen($tabelle, &...$variablen) {
+  public function werteFuellen(&...$variablen) {
     global $DBS;
     $select = [];
     foreach($this->felder as $spalte => $_) {
-      $select[] = "IF(wei.$spalte{$this->version} IS NULL, (SELECT weii.$spalte{$this->version} FROM website_{$tabelle}inhalte as weii WHERE weii.element = we.id AND weii.sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wei.$spalte{$this->version})";
+      $select[] = "{we.$spalte{$this->version}}";
     }
-    $sql = "SELECT ".join(",", $select)." FROM website_$tabelle as we JOIN website_sprachen as ws LEFT JOIN website_{$tabelle}inhalte as wei ON wei.sprache = ws.id AND wei.element = we.id WHERE ws.a2 = [?] AND we.id = ?";
-    $DBS->anfrage($sql, "si", $this->sprache, $this->eid)->werte(...$variablen);
+    $sql = "SELECT ".join(",", $select)." FROM website__{$this->tabelle} as we WHERE we.id = ?";
+    $DBS->anfrage($sql, "i", $this->eid)->werte(...$variablen);
   }
 }

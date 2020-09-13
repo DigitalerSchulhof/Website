@@ -41,7 +41,7 @@ new Kern\Wurmloch("funktionen/website/elemente.php", array(), function($r) use (
         $sql[] = "{$sp}alt = {$sp}aktuell, {$sp}aktuell = {$sp}neu";
       }
     }
-    $DBS->anfrage("UPDATE website_{$el}inhalte JOIN website_$el SET ".join(",", $sql)." WHERE seite = ? AND sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])", "is", $id, $sprache);
+    $DBS->anfrage("UPDATE website__{$el} SET ".join(",", $sql)." WHERE seite = ? AND sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])", "is", $id, $sprache);
   }
 });
 

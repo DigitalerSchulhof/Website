@@ -1,12 +1,8 @@
 <?php
-Anfrage::post("element", "id", "sprache");
+Anfrage::post("element", "id");
 
 if(!Kern\Check::angemeldet()) {
   Anfrage::addFehler(-2, true);
-}
-
-if(!$DBS->existiert("website_sprachen", "a2 = [?]", "s", $sprache)) {
-  Anfrage::addFehler(-3, true);
 }
 
 $elemente = [];
@@ -26,11 +22,11 @@ if (!$DSH_BENUTZER->hatRecht("website.inhalte.elemente.bearbeiten")) {
   Anfrage::addFehler(-4, true);
 }
 
-if(!$DBS->existiert("website_$element", $id)) {
+if(!$DBS->existiert("website__$element", $id)) {
   Anfrage::addFehler(-3, true);
 }
 
 include_once __DIR__."/_details.php";
 
-Anfrage::setRueck("Code", (string) elementDetails(array("tabelle" => $element, "klasse" => $elemente[$element], "sprache" => $sprache), $id));
+Anfrage::setRueck("Code", (string) elementDetails(array("tabelle" => $element, "klasse" => $elemente[$element]), $id));
 ?>

@@ -37,7 +37,7 @@ $DSH_SEITENMODI       = [];
 $DSH_STARTSEITE       = [];
 
 // Startseite nimmt, wenn vorhanden den Pfad der Sprache, ansonsten Fallback der Standardsprache
-$anf = $DBS->anfrage("SELECT {a2}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = wsd.seite AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad) FROM website_seitendaten as wsd WHERE wsd.sprache = wsp.id AND wsd.seite = (SELECT id FROM website_seiten WHERE startseite = 1))} FROM website_sprachen as wsp");
+$anf = $DBS->anfrage("SELECT {a2}, {alt}, {aktuell}, {neu}, {sehen}, {bearbeiten}, {(SELECT COALESCE(wsd.pfad, COALESCE(wsd.bezeichnung, (SELECT COALESCE(wsds.pfad, wsds.bezeichnung) FROM website_seitendaten as wsds WHERE wsds.seite = wsd.seite AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))) FROM website_seitendaten as wsd WHERE wsd.sprache = wsp.id AND wsd.seite = (SELECT id FROM website_seiten WHERE startseite = 1))} FROM website_sprachen as wsp");
 while($anf->werte($a2, $alt, $aktuell, $neu, $sehen, $bearbeiten, $s)) {
   $DSH_SPRACHEN         []    = $a2;
   $DSH_SEITENVERSIONEN  [$a2] = array(
@@ -122,17 +122,6 @@ $sprache  = $WEBSITE_URL[0];
 $version  = array_search($WEBSITE_URL[1], $DSH_SEITENVERSIONEN[$sprache]);
 $modus    = array_search($WEBSITE_URL[2], $DSH_SEITENMODI[$sprache]);
 
-if(in_array($version, ["alt", "neu"])) {
-  if(!Kern\Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.versionen.$version.sehen")) {
-    \Seite::seiteAus("Fehler/403");
-  }
-}
-
-if($modus == "bearbeiten") {
-  if(!Kern\Check::angemeldet(false) || !$DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
-    \Seite::seiteAus("Fehler/403");
-  }
-}
 $pfad = array_splice($WEBSITE_URL, 3);
 $SEITE = Seite::vonPfad($sprache, $pfad, $version, $modus);
 ?>

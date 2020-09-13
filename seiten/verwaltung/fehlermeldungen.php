@@ -18,13 +18,13 @@ $spalte = new UI\Spalte("A1", new UI\SeitenUeberschrift("Fehlermeldungen auf $na
 
 $titel = $inhalte = [];
 
-$anf = $DBS->anfrage("SELECT fehler, IF(titel IS NULL, '', {titel}), IF(inhalt IS NULL, '', {inhalt}) FROM website_fehlermeldungen as wfm WHERE sprache = ?", "i", $id);
+$anf = $DBS->anfrage("SELECT fehler, COALESCE({titel}, ''), COALESCE({inhalt}, '') FROM website_fehlermeldungen as wfm WHERE sprache = ?", "i", $id);
 while($anf->werte($fehler, $tit, $inhalt)) {
   $titel[$fehler]   = $tit;
   $inhalte[$fehler] = $inhalt;
 }
 
-$anf = $DBS->anfrage("SELECT fehler, IF(titel IS NULL, '', {titel}), IF(inhalt IS NULL, '', {inhalt}) FROM website_fehlermeldungen as wfm WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))");
+$anf = $DBS->anfrage("SELECT fehler, COALESCE({titel}, ''), COALESCE({inhalt}, '') FROM website_fehlermeldungen as wfm WHERE sprache = (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))");
 while($anf->werte($fehler, $tit, $inhalt)) {
   $titel["s$fehler"]   = $tit;
   $inhalte["s$fehler"] = $inhalt;

@@ -14,7 +14,7 @@ if (!$DSH_BENUTZER->hatRecht("website.seiten.sehen")) {
   Anfrage::addFehler(-4, true);
 }
 
-$spalten = [["ws.id as id"], ["ws.art as art"], ["ws.status as status"], ["{(SELECT IF(wsd.bezeichnung IS NULL, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung))} as bezeichnung"], ["wsd.bezeichnung IS NULL as bezeichnungIstStandard"], ["{(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))} as pfad"], ["wsd.pfad IS NULL AND wsd.bezeichnung IS NULL as pfadIstStandard"], ["ws.startseite as startseite"]];
+$spalten = [["ws.id as id"], ["ws.art as art"], ["ws.status as status"], ["{(SELECT COALESCE(wsd.bezeichnung, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)))))} as bezeichnung"], ["wsd.bezeichnung IS NULL as bezeichnungIstStandard"], ["{(SELECT COALESCE(wsd.pfad, COALESCE(wsd.bezeichnung, (SELECT COALESCE(wsds.pfad, wsds.bezeichnung) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))))} as pfad"], ["wsd.pfad IS NULL AND wsd.bezeichnung IS NULL as pfadIstStandard"], ["ws.startseite as startseite"]];
 
 $sql = "SELECT ?? FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.a2 = [?]";
 
@@ -32,7 +32,7 @@ while($anfrage->werte($id, $art, $status, $bezeichnung, $bezeichnungIstStandard,
   $einrueckung = 0;
   $pfadpre     = "";
   $zug = $id;
-  while($DBS->anfrage("SELECT ws.id, {(SELECT IF(wsd.pfad IS NULL, IF(wsd.bezeichnung IS NULL, (SELECT IF(wsds.pfad IS NULL, wsds.bezeichnung, wsds.pfad) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))), wsd.bezeichnung), wsd.pfad))}, wsd.pfad IS NULL FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.a2 = [?] AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "si", $sprache, $zug)->werte($zid, $p, $pIstStandard)) {
+  while($DBS->anfrage("SELECT ws.id, {(SELECT COALESCE(wsd.pfad, COALESCE(wsd.bezeichnung, (SELECT COALESCE(wsds.pfad, wsds.bezeichnung) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))))}, wsd.pfad IS NULL FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.a2 = [?] AND ws.id = (SELECT zugehoerig FROM website_seiten WHERE id = ?)", "si", $sprache, $zug)->werte($zid, $p, $pIstStandard)) {
     $zug      = $zid;
     if($pIstStandard) {
       $pfadpre = "<i>$p</i>/$pfadpre";

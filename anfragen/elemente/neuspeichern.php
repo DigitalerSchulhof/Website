@@ -1,11 +1,15 @@
 <?php
-Anfrage::post("element", "seite", "position");
+Anfrage::post("element", "seite", "position", "sprache");
 
 if(!Kern\Check::angemeldet()) {
   Anfrage::addFehler(-2, true);
 }
 
 if(!UI\Check::istZahl($seite) || !$DBS->existiert("website_seiten", $seite)) {
+  Anfrage::addFehler(-3, true);
+}
+
+if (!$DBS->existiert("website_sprachen", "a2 = [?]", "s", $sprache)) {
   Anfrage::addFehler(-3, true);
 }
 
@@ -26,7 +30,7 @@ Anfrage::checkFehler();
 $sql = [];
 $werte = [];
 foreach($elemente as $el => $c) {
-  $sql[] = "SELECT el.position as position FROM website_$el as el WHERE el.seite = ?";
+  $sql[] = "SELECT el.position as position FROM website__$el as el WHERE el.seite = ?";
 }
 $sqlS = join("UNION", $sql);
 
@@ -44,17 +48,17 @@ if (!$DSH_BENUTZER->hatRecht("website.inhalte.elemente.anlegen")) {
 $parameter = [];
 $backup    = [];
 foreach($klasse->getFelder() as $spalte => $_) {
-  $parameter["{$spalte}neu"] = "?";
+  $parameter[] = "{$spalte}neu = [?]";
   $werte[]  = $$spalte;
 }
 
 if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.aktivieren")) {
   foreach($klasse->getFelder() as $spalte => $_) {
-    $parameter["{$spalte}aktuell"] = "?";
+    $parameter[] = "{$spalte}aktuell = [?]";
     $werte[] = $$spalte;
   }
 }
 
-$id = $DBS->neuerDatensatz("website_{$element}", array("seite" => "?", "position" => "?", "status" => "'a'"), "ii", $seite, $position);
-$DBS->anfrage("INSERT INTO website_{$element}inhalte (element, sprache, ".join(", ", array_keys($parameter)).") VALUES (?, (SELECT id FROM website_sprachen WHERE a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)), ".join(", ", array_values($parameter)).");", "i".str_repeat("s", count($parameter)), ...array_merge([$id], $werte));
+$id = $DBS->neuerDatensatz("website__$element", array("seite" => "?", "sprache" => "(SELECT id FROM website_sprachen WHERE a2 = [?]", "position" => "?", "status" => "'a'"), "isi", $seite, $sprache, $position);
+$DBS->anfrage("UPDATE website__$element SET ".join(",", $parameter)." WHERE id = ?", str_repeat("s", count($parameter))."i", array_merge($werte, [$id]));
 ?>

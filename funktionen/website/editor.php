@@ -6,16 +6,18 @@ use UI;
 class Editor extends Element {
   protected $inhalt;
 
+
   protected $felder = array(
     "inhalt" => "Editor"
   );
+
+  protected $tabelle = "editoren";
 
   public function laden() {
     if($this->eid === null) {
       $this->inhalt = "";
     } else {
-      global $DBS;
-      $this->werteFuellen("editoren", $this->inhalt);
+      $this->werteFuellen($this->inhalt);
     }
   }
 
@@ -27,15 +29,21 @@ class Editor extends Element {
   }
 
   public function anzeigen() : bool {
-    return $this->inhalt !== null;
+    return $this->modus == "bearbeiten" || $this->inhalt !== null;
   }
 
   public function bearbeiten($idpre) : UI\Element {
-    return (new UI\Editor("{$idpre}{$this->felder["inhalt"]}"))->setWert($this->inhalt);
+    $editor = new UI\Editor("{$idpre}{$this->felder["inhalt"]}");
+    $editor ->setWert($this->inhalt);
+    return $editor;
   }
 
   public function __toString() : string {
-    return "{$this->codeAuf()}{$this->inhalt}{$this->codeZu()}";
+    $inh = $this->inhalt;
+    if($this->modus == "bearbeiten" && $this->inhalt === null) {
+      $inh = new UI\Notiz(self::KEIN_INHALT);
+    }
+    return "{$this->codeAuf()}$inh{$this->codeZu()}";
   }
 }
 ?>

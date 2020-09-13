@@ -66,7 +66,7 @@ function seiteDetails($id = null, $zugehoerig = null) : UI\Fenster {
     $pfad         = "";
 
     if($id !== null) {
-      $DBS->anfrage("SELECT IF(wsd.bezeichnung IS NULL, '', {wsd.bezeichnung}), IF(wsd.pfad IS NULL, '', {wsd.pfad}) FROM website_seitendaten as wsd WHERE wsd.seite =  ? AND wsd.sprache = ?", "ii", $id, $sprachid)
+      $DBS->anfrage("SELECT COALESCE({wsd.bezeichnung}, ''), COALESCE({wsd.pfad}, '') FROM website_seitendaten as wsd WHERE wsd.seite =  ? AND wsd.sprache = ?", "ii", $id, $sprachid)
             ->werte($bezeichnung, $pfad);
     }
 

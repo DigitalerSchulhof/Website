@@ -1,11 +1,15 @@
 <?php
-Anfrage::post("element", "seite", "position");
+Anfrage::post("element", "seite", "position", "sprache");
 
 if(!Kern\Check::angemeldet()) {
   Anfrage::addFehler(-2, true);
 }
 
 if(!UI\Check::istZahl($seite) || !$DBS->existiert("website_seiten", $seite)) {
+  Anfrage::addFehler(-3, true);
+}
+
+if (!$DBS->existiert("website_sprachen", "a2 = [?]", "s", $sprache)) {
   Anfrage::addFehler(-3, true);
 }
 
@@ -21,7 +25,7 @@ if(!isset($elemente[$element])) {
 $sql = [];
 $werte = [];
 foreach($elemente as $el => $c) {
-  $sql[] = "SELECT el.position as position FROM website_$el as el WHERE el.seite = ?";
+  $sql[] = "SELECT el.position as position FROM website__$el as el WHERE el.seite = ?";
 }
 $sqlS = join("UNION", $sql);
 
@@ -38,5 +42,5 @@ if (!$DSH_BENUTZER->hatRecht("website.inhalte.elemente.anlegen")) {
 
 include_once __DIR__."/_details.php";
 
-Anfrage::setRueck("Code", (string) elementDetails(array("tabelle" => $element, "klasse" => $elemente[$element], "sprache" => null, "position" => $position, "seite" => $seite), null, $position));
+Anfrage::setRueck("Code", (string) elementDetails(array("tabelle" => $element, "klasse" => $elemente[$element], "sprache" => $sprache, "position" => $position, "seite" => $seite), null, $position));
 ?>
