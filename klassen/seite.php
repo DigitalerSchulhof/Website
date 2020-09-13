@@ -25,9 +25,11 @@ class Seite extends Kern\Seite {
     $this->seite = $daten;
     $DBS->anfrage("SELECT id FROM website_sprachen WHERE a2 = [?]", "s", $this->seite["sprache"])
           ->werte($this->seite["spracheI"]);
+
     if($this->seite["id"] !== null) {
-      $DBS->anfrage("SELECT status FROM website_seiten WHERE id = ?", "i", $this->seite["id"])
-            ->werte($this->seite["status"]);
+      // Daten laden
+      $DBS->anfrage("SELECT status, art FROM website_seiten WHERE id = ?", "i", $this->seite["id"])
+            ->werte($this->seite["status"], $this->seite["art"]);
     }
   }
 
@@ -230,7 +232,7 @@ class Seite extends Kern\Seite {
      * @var string $segB
      * @var string $segP
      */
-    while($DBS->anfrage("SELECT ws.zugehoerig, {(SELECT COALESCE(wsd.bezeichnung, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)))))}, {(SELECT COALESCE(wsd.pfad IS NULL, COALESCE(wsd.bezeichnung, (SELECT COALESCE(wsds.pfad, wsds.bezeichnung) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE ws.id = ? AND wsp.a2 = [?]", "is", $zug, $this->seite["sprache"])->werte($zug, $segB, $segP)) {
+    while($DBS->anfrage("SELECT ws.zugehoerig, {(SELECT COALESCE(wsd.bezeichnung, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)))))}, {(SELECT COALESCE(wsd.pfad, COALESCE(wsd.bezeichnung, (SELECT COALESCE(wsds.pfad, wsds.bezeichnung) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE ws.id = ? AND wsp.a2 = [?]", "is", $zug, $this->seite["sprache"])->werte($zug, $segB, $segP)) {
       $pfadBez[] = [$segP, $segB];
     }
     $pfadBez = array_reverse($pfadBez);
@@ -275,64 +277,102 @@ class Seite extends Kern\Seite {
 
     $elemente = [];
 
-    // Alle Elemente sammeln
-    new Kern\Wurmloch("funktionen/website/elemente.php", [], function($r) use (&$elemente) {
-      $elemente = array_merge($elemente, $r);
-    });
+    if($this->seite["art"] == "i") {
+      // Alle Elemente sammeln
+      new Kern\Wurmloch("funktionen/website/elemente.php", [], function($r) use (&$elemente) {
+        $elemente = array_merge($elemente, $r);
+      });
 
-    $sql = [];
-    foreach($elemente as $el => $c) {
-      $sql[] = "SELECT '$el' as typ, el.id as id, el.position as position, el.status as status FROM website__$el as el WHERE el.seite = ? AND el.sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])";
-    }
-    $sqlS = join("UNION", $sql);
+      $sql = [];
+      foreach($elemente as $el => $c) {
+        $sql[] = "SELECT '$el' as typ, el.id as id, el.position as position, el.status as status FROM website__$el as el WHERE el.seite = ? AND el.sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])";
+      }
+      $sqlS = join("UNION", $sql);
 
-    $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("is", count($sql)), array_fill(0, count($sql), [$this->seite["id"], $this->seite["sprache"]]));
-    $spalte  = new UI\Spalte("A1");
-    /**
-     * @var string $typ
-     * @var int $id
-     * @var int $position
-     * @var string $status
-     */
-    while($inhalte->werte($typ, $id, $position, $status)) {
-      // Elemente ausgeben
-      $element = new $elemente[$typ]($id, $this->seite["version"], $this->seite["modus"]);
-      if($element->anzeigen()) {
-        if($this->seite["modus"] == "bearbeiten") {
-          $neu = new UI\Box();
-          $neu ->addKlasse("dshWebsiteNeuBalken");
-          $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
-          $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
-          $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', $position, {$this->seite["id"]}, '{$this->seite["sprache"]})");
-          $neuMenue = new UI\Box($knopfEditorNeu);
+      $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("is", count($sql)), array_fill(0, count($sql), [$this->seite["id"], $this->seite["sprache"]]));
+      $spalte  = new UI\Spalte("A1");
+      /**
+       * @var string $typ
+       * @var int $id
+       * @var int $position
+       * @var string $status
+       */
+      while($inhalte->werte($typ, $id, $position, $status)) {
+        // Elemente ausgeben
+        $element = new $elemente[$typ]($id, $this->seite["version"], $this->seite["modus"]);
+        if($element->anzeigen()) {
+          if($this->seite["modus"] == "bearbeiten") {
+            $neu = new UI\Box();
+            $neu ->addKlasse("dshWebsiteNeuBalken");
+            $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
+            $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
+            $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', $position, {$this->seite["id"]}, '{$this->seite["sprache"]})");
+            $neuMenue = new UI\Box($knopfEditorNeu);
 
-          $spalte[] = $neu;
-          $spalte[] = $neuMenue;
-          $element->addFunktion("onclick", "website.elemente.bearbeiten.fenster('$typ', $id, '{$this->seite["sprache"]}')");
-          $element->addKlasse("dshWebsiteBearbeitbar");
-        }
-        if($status == "i") {
-          if($this->seite["modus"] == "bearbeiten" && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.bearbeiten")) {
-            $element  ->addKlasse("dshWebsiteBearbeitenInaktiv");
+            $spalte[] = $neu;
+            $spalte[] = $neuMenue;
+            $element->addFunktion("onclick", "website.elemente.bearbeiten.fenster('$typ', $id, '{$this->seite["sprache"]}')");
+            $element->addKlasse("dshWebsiteBearbeitbar");
+          }
+          if($status == "i") {
+            if($this->seite["modus"] == "bearbeiten" && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.bearbeiten")) {
+              $element  ->addKlasse("dshWebsiteBearbeitenInaktiv");
+              $spalte[] = $element;
+            }
+          } else {
             $spalte[] = $element;
           }
-        } else {
-          $spalte[] = $element;
         }
       }
-    }
-    if($this->seite["modus"] == "bearbeiten") {
-      $neu = new UI\Box();
-      $neu ->addKlasse("dshWebsiteNeuBalken");
-      $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
-      $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
-      $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', ".($position+1).", {$this->seite["id"]}, '{$this->seite["sprache"]}')");
-      $neuMenue = new UI\Box($knopfEditorNeu);
+      if($this->seite["modus"] == "bearbeiten") {
+        $neu = new UI\Box();
+        $neu ->addKlasse("dshWebsiteNeuBalken");
+        $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
+        $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
+        $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', ".($position+1).", {$this->seite["id"]}, '{$this->seite["sprache"]}')");
+        $neuMenue = new UI\Box($knopfEditorNeu);
 
-      $spalte[] = $neu;
-      $spalte[] = $neuMenue;
+        $spalte[] = $neu;
+        $spalte[] = $neuMenue;
+      }
+      $code .= new UI\Zeile($spalte);
+    } else {
+      // Unternavigation laden
+      $spalte = new UI\Spalte();
+      if($this->seite["modus"] == "bearbeiten") {
+        $spalte[] = new UI\Meldung("Automatischer Inhalt", "Der Inhalt dieser Seite wird automatisch aus den Unterseiten generiert.", "Information");
+      }
+      /**
+       * @var string $titel
+       */
+      $DBS->anfrage("SELECT {(SELECT COALESCE(wsd.bezeichnung, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)))))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE ws.id = ? AND wsp.a2 = [?]", "is", $this->seite["id"], $this->seite["sprache"])
+            ->werte($titel);
+      $spalte[] = new UI\SeitenUeberschrift($titel);
+
+      $sqlStatus = "";
+      if (!Kern\Check::angemeldet() || !$DSH_BENUTZER->hatRecht("website.inhalte.versionen.[|alt,neu].[|sehen,aktivieren] || website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) {
+        $sqlStatus = " AND status = 'a'";
+      }
+
+      $anf = $DBS->anfrage("SELECT ws.id, {(SELECT COALESCE(wsd.pfad, COALESCE(wsd.bezeichnung, (SELECT COALESCE(wsds.pfad, wsds.bezeichnung) FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0))))))}, {(SELECT COALESCE(wsd.bezeichnung, (SELECT wsds.bezeichnung FROM website_seitendaten as wsds WHERE wsds.seite = ws.id AND wsds.sprache = (SELECT id FROM website_sprachen as wsp WHERE wsp.a2 = (SELECT wert FROM website_einstellungen WHERE id = 0)))))} FROM website_seiten as ws JOIN website_sprachen as wsp LEFT JOIN website_seitendaten as wsd ON wsd.seite = ws.id AND wsd.sprache = wsp.id WHERE wsp.id = (SELECT id FROM website_sprachen WHERE a2 = [?]) AND ws.zugehoerig = ?$sqlStatus", "si", $this->seite["sprache"], $this->seite["id"]);
+      /**
+       * @var int $unterid
+       */
+      while ($anf->werte($unterid, $pf, $bez)) {
+        if ((Kern\Check::angemeldet() && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) || self::sichtbar($unterid, $this->seite["sprache"])) {
+          $direkt  = new UI\IconKnopf(new UI\Icon("fas fa-globe"), $bez);
+          $direkt->addFunktion("href", "{$this->meta()}".join("/", $this->seite["pfad"])."/$pf");
+          $spalte[] = "$direkt ";
+        }
+      }
+
+      if (count($spalte->getElemente()) == 1) { // 1 weil Titel
+        $spalte[] = new UI\Notiz("Keine Unterseiten verfügbar");
+        // @TODO: Übersetzung
+      }
+
+      $code .= new UI\Zeile($spalte);
     }
-    $code .= new UI\Zeile($spalte);
 
     $sprachwahl = new UI\Auswahl("dshWebsiteSprache", $this->seite["sprache"]);
     $sprachwahl ->addFunktion("oninput", "website.seite.aendern.sprache()");
@@ -443,6 +483,15 @@ class Seite extends Kern\Seite {
   public static function sichtbar($id, $sprache, $version = null) : bool {
     global $DBS;
     $version ??= STANDARDVERSION;
+
+    /**
+     * @var string $art
+     */
+    $DBS->anfrage("SELECT art FROm website_seiten WHERE id = ?", "i", $id)
+          ->werte($art);
+    if($art == "m") {
+      return true;
+    }
 
     $elemente = [];
     // Alle Elemente sammeln
