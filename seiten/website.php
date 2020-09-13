@@ -29,8 +29,6 @@ use Kern;
 // Global machen
 global $DSH_SPRACHEN, $DSH_SEITENVERSIONEN, $DSH_SEITENMODI, $DSH_STARTSEITE, $WEBSITE_URL;
 
-define("Website\STANDARDSPRACHE", \Kern\Einstellungen::laden("Website", "Standardsprache"));
-
 $DSH_SPRACHEN         = [];
 $DSH_SEITENVERSIONEN  = [];
 $DSH_SEITENMODI       = [];
@@ -55,9 +53,6 @@ $DSH_SEITENVERSIONEN  = Kern\Texttrafo::text2url($DSH_SEITENVERSIONEN);
 $DSH_SEITENMODI       = Kern\Texttrafo::text2url($DSH_SEITENMODI);
 $DSH_STARTSEITE       = Kern\Texttrafo::text2url($DSH_STARTSEITE);
 $WEBSITE_URL          = [];
-
-const STANDARDMODUS    = "sehen";
-const STANDARDVERSION  = "aktuell";
 
 // Sprache/Version/Modus/Seiten..
 

@@ -344,6 +344,9 @@ class Seite extends Kern\Seite {
      * @var int $spracheI
      */
     while($anf->werte($a2, $bez, $spracheI)) {
+      if(!(Kern\Check::angemeldet() && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) && !self::sichtbar($this->seite["id"], $a2, $this->seite["version"])) {
+        continue;
+      }
       $url = "";
       $zug = $this->seite["id"];
       // Pfad für die Sprache bestimmen
@@ -364,8 +367,9 @@ class Seite extends Kern\Seite {
     }
     $sprachwahl->addKlasse("dshUiEingabefeldKlein");
     $sprachwahl->setStyle("float", "right");
-
-    $code .= UI\Zeile::standard($sprachwahl);
+    if(count($sprachwahl->getOptionen()) > 1) {
+      $code .= UI\Zeile::standard($sprachwahl);
+    }
 
     return $code;
   }
@@ -413,7 +417,7 @@ class Seite extends Kern\Seite {
       $seiteI = null;
     }
 
-    if($seiteI === null || (!(Kern\Check::angemeldet() && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) && !self::seiteSichtbar($seiteI, $sprache, $version))) {
+    if($seiteI === null || (!(Kern\Check::angemeldet() && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.[|anlegen,bearbeiten,löschen]")) && !self::sichtbar($seiteI, $sprache, $version))) {
       // Seite nicht gefunden
       return new Seite(array_merge($meta, [
         "id"      => null,
@@ -428,7 +432,7 @@ class Seite extends Kern\Seite {
   }
 
   /**
-   * Gibt zurück, ob eine Seite mit einer Sprache sichtbar ist (Mind. ein Element mit Inhalt)
+   * Gibt zurück, ob die Kombination aus Seite und Sprache sichtbar ist (Mind. ein Element mit Inhalt)
    *
    * @param int $id               Die ID der Seite
    * @param string $sprache       Die A2-Kennung der Sprache
@@ -436,7 +440,7 @@ class Seite extends Kern\Seite {
    * Wenn <code>null</code>: Standardversion
    * @return boolean
    */
-  public static function seiteSichtbar($id, $sprache, $version = null) : bool {
+  public static function sichtbar($id, $sprache, $version = null) : bool {
     global $DBS;
     $version ??= STANDARDVERSION;
 
