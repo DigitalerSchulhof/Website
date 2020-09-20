@@ -94,3 +94,15 @@
 22:
   ort: anfragen/verwaltung/fehlermeldungen/speicher.php
   beschreibung: Ein <b>Inhalt</b> ist ungültig.
+23:
+ ort: funktionen/website/kontaktformular.php
+ beschreibung: Der <b>Betreff</b> ist ungültig.
+24:
+ ort: funktionen/website/kontaktformular.php
+ beschreibung: Ein <b>Name</b> ist ungültig.
+25:
+ ort: funktionen/website/kontaktformular.php
+ beschreibung: Eine <b>eMail-Adresse</b> ist ungültig.
+26:
+ ort: funktionen/website/kontaktformular.php
+ beschreibung: Eine <b>Beschreibung</b> ist ungültig.

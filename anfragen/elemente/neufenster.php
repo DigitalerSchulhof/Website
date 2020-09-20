@@ -27,7 +27,7 @@ $werte = [];
 foreach($elemente as $el => $c) {
   $sql[] = "SELECT el.position as position FROM website__$el as el WHERE el.seite = ?";
 }
-$sqlS = join("UNION", $sql);
+$sqlS = join(" UNION ", $sql);
 
 $max = 0;
 $DBS->anfrage("SELECT MAX(position) FROM ($sqlS) AS x", str_repeat("i", count($sql)), array_fill(0, count($sql), $seite))->werte($max);

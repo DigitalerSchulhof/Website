@@ -1,20 +1,24 @@
 <?php
+
 namespace Website\Elemente;
+
 use \Website\Element as Element;
 use UI;
+use Anfrage;
 
 class Editor extends Element {
+  /** @var string */
   protected $inhalt;
 
 
   protected $felder = array(
-    "inhalt" => "Editor"
+    "inhalt"  => "Editor"
   );
 
   protected $tabelle = "editoren";
 
   public function laden() {
-    if($this->eid === null) {
+    if ($this->eid === null) {
       $this->inhalt = "";
     } else {
       $this->werteFuellen($this->inhalt);
@@ -23,27 +27,31 @@ class Editor extends Element {
 
   public static function postValidieren() {
     global $inhalt;
-    if(!UI\Check::istEditor($inhalt)) {
-      \Anfrage::addFehler(20);
+    if (!UI\Check::istEditor($inhalt)) {
+      Anfrage::addFehler(20);
     }
   }
 
-  public function anzeigen() : bool {
-    return $this->modus == "bearbeiten" || $this->inhalt !== null;
+  public static function genNeuKnopf(): UI\Knopf {
+    return new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
   }
 
-  public function bearbeiten($idpre) : UI\Element {
+  public function bearbeiten($idpre): array {
     $editor = new UI\Editor("{$idpre}{$this->felder["inhalt"]}");
-    $editor ->setWert($this->inhalt);
-    return $editor;
+    $editor->setWert($this->inhalt);
+    return [$editor];
   }
 
-  public function __toString() : string {
+  public function __toString(): string {
     $inh = $this->inhalt;
-    if($this->modus == "bearbeiten" && $this->inhalt === null) {
-      $inh = new UI\Notiz(self::KEIN_INHALT);
+    if ($this->modus == "bearbeiten") {
+      if($this->status == "l") {
+        return new UI\Notiz(self::GELOESCHT);
+      }
+      if($this->inhalt === null) {
+        return new UI\Notiz(self::KEIN_INHALT);
+      }
     }
     return "{$this->codeAuf()}$inh{$this->codeZu()}";
   }
 }
-?>

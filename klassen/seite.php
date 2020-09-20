@@ -28,8 +28,8 @@ class Seite extends Kern\Seite {
 
     if($this->seite["id"] !== null) {
       // Daten laden
-      $DBS->anfrage("SELECT status, art FROM website_seiten WHERE id = ?", "i", $this->seite["id"])
-            ->werte($this->seite["status"], $this->seite["art"]);
+      $DBS->anfrage("SELECT status, art, startseite FROM website_seiten WHERE id = ?", "i", $this->seite["id"])
+            ->werte($this->seite["status"], $this->seite["art"], $this->seite["startseite"]);
     }
   }
 
@@ -118,8 +118,10 @@ class Seite extends Kern\Seite {
         $knopfSeiteStatus = new UI\GrossIconKnopf(new UI\Icon("fas fa-toggle-off"), "Aktivieren", "Erfolg");
         $knopfSeiteStatus ->addFunktion("onclick", "website.verwaltung.seiten.setzen.status({$this->seite["id"]}, 'a').then(_ => core.neuladen())");
       } else {
-        $knopfSeiteStatus = new UI\GrossIconKnopf(new UI\Icon("fas fa-toggle-on"), "Deaktivieren", "Warnung");
-        $knopfSeiteStatus ->addFunktion("onclick", "website.verwaltung.seiten.setzen.status({$this->seite["id"]}, 'i').then(_ => core.neuladen())");
+        if(!$this->seite["startseite"]) {
+          $knopfSeiteStatus = new UI\GrossIconKnopf(new UI\Icon("fas fa-toggle-on"), "Deaktivieren", "Warnung");
+          $knopfSeiteStatus ->addFunktion("onclick", "website.verwaltung.seiten.setzen.status({$this->seite["id"]}, 'i').then(_ => core.neuladen())");
+        }
       }
 
       $knopfSeiteBearbeiten = new UI\GrossIconKnopf(new UI\Icon(UI\Konstanten::BEARBEITEN), "Seite bearbeiten");
@@ -261,7 +263,7 @@ class Seite extends Kern\Seite {
         }
 
         if($this->seite["status"] == "i") {
-          $extra[] = "Inaktiv";
+          $ex[] = "Inaktiv";
         }
         if(count($ex) > 0) {
           $extra = " (".join(", ", $ex).")";
@@ -285,11 +287,16 @@ class Seite extends Kern\Seite {
 
       $sql = [];
       foreach($elemente as $el => $c) {
-        $sql[] = "SELECT '$el' as typ, el.id as id, el.position as position, el.status as status FROM website__$el as el WHERE el.seite = ? AND el.sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])";
+        $sql[] = "SELECT '$el' as typ, el.id as id, el.position as position, el.status{$this->seite["version"]} as status FROM website__$el as el WHERE el.seite = ? AND el.sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])";
       }
-      $sqlS = join("UNION", $sql);
+      $sqlS = join(" UNION ", $sql);
 
-      $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("is", count($sql)), array_fill(0, count($sql), [$this->seite["id"], $this->seite["sprache"]]));
+      $w = [];
+      for($i = 0; $i < count($sql); $i++) {
+        $w[] = $this->seite["id"];
+        $w[] = $this->seite["sprache"];
+      }
+      $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("is", count($sql)), $w);
       $spalte  = new UI\Spalte("A1");
       /**
        * @var string $typ
@@ -299,26 +306,32 @@ class Seite extends Kern\Seite {
        */
       while($inhalte->werte($typ, $id, $position, $status)) {
         // Elemente ausgeben
+        /** @var Element $element */
         $element = new $elemente[$typ]($id, $this->seite["version"], $this->seite["modus"]);
-        if($element->anzeigen()) {
+        if($this->seite["modus"] == "bearbeiten" || $element->anzeigen()) {
           if($this->seite["modus"] == "bearbeiten") {
             $neu = new UI\Box();
             $neu ->addKlasse("dshWebsiteNeuBalken");
             $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
-            $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
-            $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', $position, {$this->seite["id"]}, '{$this->seite["sprache"]})");
-            $neuMenue = new UI\Box($knopfEditorNeu);
+
+            $knoepfeNeu  = [];
+            foreach($elemente as $el => $c) {
+              $kn = (new $c(null, null, null, null))::genNeuKnopf();
+              $kn ->addFunktion("onclick", "website.elemente.neu.fenster('$el', $position, {$this->seite["id"]}, '{$this->seite["sprache"]}')");
+              $knoepfeNeu[] = $kn;
+            }
+            $neuMenue = new UI\Box(...$knoepfeNeu);
 
             $spalte[] = $neu;
             $spalte[] = $neuMenue;
-            $element->addFunktion("onclick", "website.elemente.bearbeiten.fenster('$typ', $id, '{$this->seite["sprache"]}')");
-            $element->addKlasse("dshWebsiteBearbeitbar");
-          }
-          if($status == "i") {
-            if($this->seite["modus"] == "bearbeiten" && $DSH_BENUTZER->hatRecht("website.inhalte.elemente.bearbeiten")) {
-              $element  ->addKlasse("dshWebsiteBearbeitenInaktiv");
-              $spalte[] = $element;
+
+            $b = new UI\Box($element);
+            if($status == "i") {
+              $b->addKlasse("dshWebsiteBearbeitenInaktiv");
             }
+            $b->addFunktion("onclick", "website.elemente.bearbeiten.fenster('$typ', $id, '{$this->seite["sprache"]}')");
+            $b->addKlasse("dshWebsiteBearbeitbar");
+            $spalte[] = $b;
           } else {
             $spalte[] = $element;
           }
@@ -328,9 +341,15 @@ class Seite extends Kern\Seite {
         $neu = new UI\Box();
         $neu ->addKlasse("dshWebsiteNeuBalken");
         $neu ->addFunktion("onclick", "$(this).toggleKlasse('dshWebsiteNeuSichtbar')");
-        $knopfEditorNeu = new UI\GrossIconKnopf(new UI\Icon("fas fa-pencil-alt"), "Neuer Editor", "Standard");
-        $knopfEditorNeu ->addFunktion("onclick", "website.elemente.neu.fenster('editoren', ".($position+1).", {$this->seite["id"]}, '{$this->seite["sprache"]}')");
-        $neuMenue = new UI\Box($knopfEditorNeu);
+
+        $knoepfeNeu  = [];
+        foreach ($elemente as $el => $c) {
+          $kn = (new $c(null, null, null, null))::genNeuKnopf();
+          $kn->addFunktion("onclick", "website.elemente.neu.fenster('$el', ".($position+1).", {$this->seite["id"]}, '{$this->seite["sprache"]}')");
+          $knoepfeNeu[] = $kn;
+        }
+
+        $neuMenue = new UI\Box(...$knoepfeNeu);
 
         $spalte[] = $neu;
         $spalte[] = $neuMenue;
@@ -501,11 +520,17 @@ class Seite extends Kern\Seite {
 
     $sql = [];
     foreach ($elemente as $el => $c) {
-      $sql[] = "SELECT '$el' as typ, el.id as id, el.position as position, el.status as status FROM website__$el as el WHERE el.seite = ? AND el.sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])";
+      $sql[] = "SELECT '$el' as typ, el.id as id, el.position as position, el.status$version as status FROM website__$el as el WHERE el.seite = ? AND el.sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])";
     }
-    $sqlS = join("UNION", $sql);
+    $sqlS = join(" UNION ", $sql);
 
-    $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("is", count($sql)), array_fill(0, count($sql), [$id, $sprache]));
+    $w = [];
+    for($i = 0; $i < count($sql); $i++) {
+      $w[] = $id;
+      $w[] = $sprache;
+    }
+
+    $inhalte = $DBS->anfrage("SELECT * FROM ($sqlS) AS x ORDER BY position ASC", str_repeat("is", count($sql)), $w);
     $spalte  = new UI\Spalte("A1");
     /**
      * @var string $typ

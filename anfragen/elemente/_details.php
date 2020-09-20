@@ -26,8 +26,8 @@ function elementDetails($element, $id = null) : UI\Fenster {
   global $DBS;
   if($id === null) {
     $idpre    = "dshWebsiteElementNeu";
-    $fenstertitel = "Neue Element anlegen";
-    $spalte   = new UI\Spalte("A1", new UI\SeitenUeberschrift("Neue Element anlegen"));
+    $fenstertitel = "Neues Element anlegen";
+    $spalte   = new UI\Spalte("A1", new UI\SeitenUeberschrift("Neues Element anlegen"));
   } else {
     $idpre    = "dshWebsiteElementBearbeiten{$el}_$id";
     $fenstertitel = "Element bearbeiten";
@@ -42,39 +42,60 @@ function elementDetails($element, $id = null) : UI\Fenster {
   $status         = "a";
 
   if($id !== null) {
-    $DBS->anfrage("SELECT status FROM website__$el WHERE id = ?", "i", $id)
+    $DBS->anfrage("SELECT statusaktuell FROM website__$el WHERE id = ?", "i", $id)
           ->werte($status);
   }
 
-  $statuswahl = new UI\Auswahl("{$idpre}Status", $status);
-  $statuswahl ->add("Aktiv",    "a");
-  $statuswahl ->add("Inaktiv",  "i");
+  if($status == "l") {
+    $statuswahl = new UI\Auswahl("{$idpre}Status", $status);
+    $statuswahl->add("Gelöscht", "l");
+    $statuswahl->setDisabled(true);
 
-  $formular[] = new UI\FormularFeld(new UI\InhaltElement("Status:"),                  $statuswahl);
+    $formular[] = new UI\FormularFeld(new UI\InhaltElement("Status:"),                  $statuswahl);
 
-  $elm = new $klasse($id, "aktuell", null);
+    $formular[] = (new UI\Knopf("Alte Daten wiederherstellen", "Warnung"))->setSubmit(true);
+    $formular->addSubmit("@TODO: Alte Daten des Elements wiederherstellen");
+    $spalte[]   = $formular;
 
-  $formular[] = new UI\FormularFeld($elm->bearbeiten($idpre));
-  $felder = [];
-  foreach($elm->getFelder() as $feld => $attr) {
-    $felder[] = $feld;
-    $felder[] = $attr;
-  }
-  $formular[] = new UI\FormularFeld(new UI\VerstecktesFeld("{$idpre}Felder", join(";", $felder)));
-  if($id === null) {
-    $formular[] = (new UI\Knopf("Neues Element anlegen", "Erfolg")) ->setSubmit(true);
-    $formular   ->addSubmit("website.elemente.neu.speichern('$el', $position, $seite, '$sprache')");
   } else {
-    $formular[] = (new UI\Knopf("Änderungen speichern", "Erfolg"))  ->setSubmit(true);
-    $formular   ->addSubmit("website.elemente.bearbeiten.speichern('$el', $id)");
-    global $DSH_BENUTZER;
-    if($DSH_BENUTZER->hatRecht("website.inhalte.elemente.löschen")) {
-      $formular[] = (new UI\IconKnopf(new UI\Icon(UI\Konstanten::LOESCHEN), "Element löschen", "Fehler"))     ->addFunktion("onclick", "website.elemente.loeschen.fragen('$el', $id)")
-                                                                                                              ->setStyle("float", "right");
+    $statuswahl = new UI\Auswahl("{$idpre}Status", $status);
+    $statuswahl ->add("Aktiv",    "a");
+    $statuswahl ->add("Inaktiv",  "i");
+
+    $formular[] = new UI\FormularFeld(new UI\InhaltElement("Status:"),                  $statuswahl);
+    /** @var Website\Element $elm */
+    $elm = new $klasse($id, "aktuell", null);
+    foreach($elm->bearbeiten($idpre) as $k => $b) {
+      if(intval($k) === $k) {
+        $formular[] = new UI\FormularFeld($b);
+      } else {
+        $formular[] = new UI\FormularFeld(new UI\InhaltElement($k), $b);
+      }
+    }
+    $felder = [];
+    foreach($elm->getFelder() as $feld => $attr) {
+      $felder[] = $feld;
+      $felder[] = $attr;
+    }
+    $formular[] = new UI\FormularFeld(new UI\VerstecktesFeld("{$idpre}Felder", join(";", $felder)));
+    if($id === null) {
+      $formular[] = (new UI\Knopf("Neues Element anlegen", "Erfolg")) ->setSubmit(true);
+      $formular   ->addSubmit("website.elemente.neu.speichern('$el', $position, $seite, '$sprache')");
+    } else {
+      $formular[] = (new UI\Knopf("Änderungen speichern", "Erfolg"))  ->setSubmit(true);
+      $formular   ->addSubmit("website.elemente.bearbeiten.speichern('$el', $id)");
+      global $DSH_BENUTZER;
+      if($DSH_BENUTZER->hatRecht("website.inhalte.elemente.löschen")) {
+        $formular[] = (new UI\IconKnopf(new UI\Icon(UI\Konstanten::LOESCHEN), "Element löschen", "Fehler"))     ->addFunktion("onclick", "website.elemente.loeschen.fragen('$el', $id)")
+                                                                                                                ->setStyle("float", "right");
+      }
+    }
+    $spalte[]   = $formular;
+
+    foreach($elm->bearbeitenPost($idpre) as $f) {
+      $spalte[] = $f;
     }
   }
-
-  $spalte[]   = $formular;
 
   return new UI\Fenster($idpre, $fenstertitel, new UI\Zeile($spalte));
 }

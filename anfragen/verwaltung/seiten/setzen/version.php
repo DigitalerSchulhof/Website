@@ -36,12 +36,15 @@ new Kern\Wurmloch("funktionen/website/elemente.php", array(), function($r) use (
       foreach($kl->getFelder() as $sp => $_) {
         $sql[] = "{$sp}aktuell = {$sp}alt";
       }
+      $sql[] = "statusaktuell = statusalt";
     } else {
       foreach($kl->getFelder() as $sp => $_) {
         $sql[] = "{$sp}alt = {$sp}aktuell, {$sp}aktuell = {$sp}neu";
       }
+      $sql[] = "statusalt = statusaktuell, statusaktuell = statusneu";
     }
-    $DBS->anfrage("UPDATE website__{$el} SET ".join(",", $sql)." WHERE seite = ? AND sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])", "is", $id, $sprache);
+    $DBS->anfrage("UPDATE website__$el SET " . join(",", $sql) . " WHERE seite = ? AND sprache = (SELECT id FROM website_sprachen WHERE a2 = [?])", "is", $id, $sprache);
+    $DBS->anfrage("DELETE FROM website__$el WHERE statusalt = 'l' AND statusaktuell = 'l' AND statusneu = 'l'");
   }
 });
 

@@ -1,5 +1,5 @@
 <?php
-Anfrage::post("element", "seite", "position", "sprache");
+Anfrage::post("element", "seite", "position", "sprache", "status");
 
 if(!Kern\Check::angemeldet()) {
   Anfrage::addFehler(-2, true);
@@ -13,6 +13,10 @@ if (!$DBS->existiert("website_sprachen", "a2 = [?]", "s", $sprache)) {
   Anfrage::addFehler(-3, true);
 }
 
+if (!in_array($status, ["a", "i"])) {
+  Anfrage::addFehler(-3, true);
+}
+
 $elemente = [];
 new Kern\Wurmloch("funktionen/website/elemente.php", array(), function($r) use (&$elemente){
   $elemente = array_merge($elemente, $r);
@@ -22,6 +26,7 @@ if(!isset($elemente[$element])) {
   Anfrage::addFehler(-3, true);
 }
 
+/** @var Website\Element $klasse */
 $klasse = new $elemente[$element](null, null, null, null);
 Anfrage::post(...array_keys($klasse->getFelder()));
 $klasse->postValidieren();
@@ -32,7 +37,7 @@ $werte = [];
 foreach($elemente as $el => $c) {
   $sql[] = "SELECT el.position as position FROM website__$el as el WHERE el.seite = ?";
 }
-$sqlS = join("UNION", $sql);
+$sqlS = join(" UNION ", $sql);
 
 $max = 0;
 $DBS->anfrage("SELECT MAX(position) FROM ($sqlS) AS x", str_repeat("i", count($sql)), array_fill(0, count($sql), $seite))->werte($max);
@@ -46,19 +51,23 @@ if (!$DSH_BENUTZER->hatRecht("website.inhalte.elemente.anlegen")) {
 }
 
 $parameter = [];
-$backup    = [];
+
 foreach($klasse->getFelder() as $spalte => $_) {
   $parameter[] = "{$spalte}neu = [?]";
   $werte[]  = $$spalte;
 }
 
+$sakt = "i";
 if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.aktivieren")) {
+  $sakt = $status;
   foreach($klasse->getFelder() as $spalte => $_) {
     $parameter[] = "{$spalte}aktuell = [?]";
     $werte[] = $$spalte;
   }
 }
 
-$id = $DBS->neuerDatensatz("website__$element", array("seite" => "?", "sprache" => "(SELECT id FROM website_sprachen WHERE a2 = [?]", "position" => "?", "status" => "'a'"), "isi", $seite, $sprache, $position);
+$id = $DBS->neuerDatensatz("website__$element", array("seite" => "?", "sprache" => "(SELECT id FROM website_sprachen WHERE a2 = [?])", "position" => "?", "statusalt" => "'l'", "statusaktuell" => "?", "statusneu" => "?"), "isiss", $seite, $sprache, $position, $sakt, $status);
 $DBS->anfrage("UPDATE website__$element SET ".join(",", $parameter)." WHERE id = ?", str_repeat("s", count($parameter))."i", array_merge($werte, [$id]));
+$klasse->setEId($id);
+$klasse->nachSpeichern();
 ?>

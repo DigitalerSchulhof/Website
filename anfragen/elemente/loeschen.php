@@ -1,4 +1,6 @@
 <?php
+/** @var \Kern\DB $DBS */
+
 Anfrage::post("element", "id");
 if(!Kern\Check::angemeldet()) {
   Anfrage::addFehler(-2, true);
@@ -25,6 +27,10 @@ if (!$DSH_BENUTZER->hatRecht("website.inhalte.elemente.löschen")) {
 
 $parameter = [];
 $backup    = [];
+
+$parameter["statusneu"] = "'l'";
+$backup[] = "statusalt = statusaktuell";
+
 foreach($klasse->getFelder() as $spalte => $_) {
   $parameter["{$spalte}neu"] = "NULL";
   $backup[] = "{$spalte}alt = {$spalte}aktuell";
@@ -34,9 +40,11 @@ if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.aktivieren")) {
   foreach($klasse->getFelder() as $spalte => $_) {
     $parameter["{$spalte}aktuell"] = "NULL";
   }
+  $parameter["statusaktuell"] = "'l'";
 }
 
-$DBS->anfrage("UPDATE website__{$element} SET ".join(",", $backup)." WHERE id = ?", "i", $id);
-$id = $DBS->datensatzBearbeiten("website__{$element}", "id = ?", $parameter, "i", ...[$id]);
+$DBS->anfrage("UPDATE website__$element SET ".join(",", $backup)." WHERE id = ?", "i", $id);
+$id = $DBS->datensatzBearbeiten("website__$element", "id = ?", $parameter, "i", ...[$id]);
+$DBS->anfrage("DELETE FROM website__$element WHERE statusalt = 'l' AND statusaktuell = 'l' AND statusneu = 'l'");
 
 ?>
