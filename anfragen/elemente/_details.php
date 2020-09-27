@@ -1,4 +1,7 @@
 <?php
+
+use UI\FormularFeld;
+
 /**
  * Gibt ein Fenster mit den Details und Aktionen eines Elements zurück
  * @param  array   $element Assoziatives Array mit Daten zum Element:
@@ -53,8 +56,16 @@ function elementDetails($element, $id = null) : UI\Fenster {
 
     $formular[] = new UI\FormularFeld(new UI\InhaltElement("Status:"),                  $statuswahl);
 
-    $formular[] = (new UI\Knopf("Alte Daten wiederherstellen", "Warnung"))->setSubmit(true);
-    $formular->addSubmit("@TODO: Alte Daten des Elements wiederherstellen");
+    $kn = [];
+    if ($DSH_BENUTZER->hatRecht("website.inhalte.versionen.alt.aktivieren")) {
+      $kn[] = (new UI\Knopf("Alte Daten wiederherstellen", "Warnung"))->setSubmit(false)->addFunktion("onclick", "website.elemente.setzen.version.fragen('$el', $id, 'a')");
+    }
+    if ($DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.aktivieren")) {
+      $kn[] = (new UI\Knopf("Neue Daten aktivieren", "Erfolg"))->setSubmit(false)->addFunktion("onclick", "website.elemente.setzen.version.fragen('$el', $id, 'n')");
+    }
+    if (count($kn) > 0) {
+      $formular[] = new UI\FormularFeld(join(" ", $kn));
+    }
     $spalte[]   = $formular;
 
   } else {
@@ -82,9 +93,20 @@ function elementDetails($element, $id = null) : UI\Fenster {
       $formular[] = (new UI\Knopf("Neues Element anlegen", "Erfolg")) ->setSubmit(true);
       $formular   ->addSubmit("website.elemente.neu.speichern('$el', $position, $seite, '$sprache')");
     } else {
-      $formular[] = (new UI\Knopf("Änderungen speichern", "Erfolg"))  ->setSubmit(true);
-      $formular   ->addSubmit("website.elemente.bearbeiten.speichern('$el', $id)");
       global $DSH_BENUTZER;
+
+      $kn = [];
+      if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.alt.aktivieren")) {
+        $kn[] = (new UI\Knopf("Alte Daten wiederherstellen", "Warnung"))->setSubmit(false)->addFunktion("onclick", "website.elemente.setzen.version.fragen('$el', $id, 'a')");
+      }
+      if($DSH_BENUTZER->hatRecht("website.inhalte.versionen.neu.aktivieren")) {
+        $kn[] = (new UI\Knopf("Neue Daten aktivieren", "Erfolg"))->setSubmit(false)->addFunktion("onclick", "website.elemente.setzen.version.fragen('$el', $id, 'n')");
+      }
+      if(count($kn) > 0) {
+        $formular[] = new UI\FormularFeld(join(" ", $kn));
+      }
+      $formular[] = (new UI\Knopf("Änderungen speichern", "Erfolg"))->setSubmit(true);
+      $formular->addSubmit("website.elemente.bearbeiten.speichern('$el', $id)");
       if($DSH_BENUTZER->hatRecht("website.inhalte.elemente.löschen")) {
         $formular[] = (new UI\IconKnopf(new UI\Icon(UI\Konstanten::LOESCHEN), "Element löschen", "Fehler"))     ->addFunktion("onclick", "website.elemente.loeschen.fragen('$el', $id)")
                                                                                                                 ->setStyle("float", "right");

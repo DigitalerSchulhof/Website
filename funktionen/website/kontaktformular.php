@@ -149,7 +149,7 @@ class Kontaktformular extends Element {
   public function __toString(): string {
     if ($this->modus == "bearbeiten") {
       if ($this->status == "l") {
-        return new UI\Notiz(self::GELOESCHT);
+        return new UI\Notiz("Gelöschtes Kontaktformular");
       }
     }
     $form = new UI\FormularTabelle();

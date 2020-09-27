@@ -30,11 +30,11 @@ website.verwaltung.seiten = {
   },
   loeschen: {
     fragen:     id => ui.laden.meldung("Website", 8, "Seite löschen", {id: id}),
-    ausfuehren: id => core.ajax("Website", 12, null, {id: id}, 9, "dshVerwaltungSeiten")
+    ausfuehren: id => core.ajax("Website", 12, null, {id: id}, 9, "dshVerwaltungSeiten").then(_ => core.neuladen())
   },
   startseite: {
     fragen:     id => ui.laden.meldung("Website", 10, "Zur Startseite machen", {id: id}),
-    ausfuehren: id => core.ajax("Website", 13, null, {id: id}, 11, "dshVerwaltungSeiten")
+    ausfuehren: id => core.ajax("Website", 13, null, {id: id}, 11, "dshVerwaltungSeiten").then(_ => core.neuladen())
   },
   setzen: {
     status:     (id, status)  => core.ajax("Website", 14, "Status ändern", {id: id, status: status}, null, "dshVerwaltungSeiten")
@@ -42,7 +42,7 @@ website.verwaltung.seiten = {
     version: {
       fragen:     (id, version, sprache) => ui.laden.meldung("Website", 14, "Daten ändern", {id: id, version: version, sprache: sprache}),
       ausfuehren: (id, version, sprache) => core.ajax("Website", 19, null, {id: id, version: version, sprache: sprache})
-                                                  .then(_ => ui.laden.meldung("Website", 15, null, {version: version}))
+                                                  .then(_ => {core.neuladen(); ui.laden.meldung("Website", 15, null, {version: version})})
     }
   }
 };

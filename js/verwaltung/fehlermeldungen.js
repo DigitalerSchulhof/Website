@@ -5,7 +5,7 @@ website.verwaltung.fehlermeldungen = {
     titel404:   $("#"+id+"Titel404").getWert(),
     inhalt404:  $("#"+id+"Inhalt404").getWert(),
   }),
-  speichern: sprache => core.ajax("Website", 21, "Änderungen speichern", {sprache: sprache, ...website.verwaltung.fehlermeldungen.daten("dshVerwaltungFehlermeldung")}, 18),
+  speichern: sprache => core.ajax("Website", 21, "Änderungen speichern", {sprache: sprache, ...website.verwaltung.fehlermeldungen.daten("dshVerwaltungFehlermeldung")}, 18).then(_ => core.neuladen()),
   sprache: _ => {
     core.seiteLaden($("#dshVerwaltungFehlermeldungenSprachwahl").getWert());
     let spracheFokus = _ => {

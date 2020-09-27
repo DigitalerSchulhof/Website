@@ -64,13 +64,13 @@ switch ($meldeid) {
     break;
   case 12:
     Anfrage::setRueck("Meldung", new UI\Meldung("Element anlegen", "Das Element wurde angelegt.", "Erfolg"));
-    $knoepfe[] = (UI\Knopf::ok("dshWebsiteElementNeu"))->addFunktion("onclick", "core.neuladen()");
+    $knoepfe[] = (UI\Knopf::ok("dshWebsiteElementNeu"));
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;
   case 13:
     parameter("element", "id");
     Anfrage::setRueck("Meldung", new UI\Meldung("Element bearbeiten", "Das Element wurde bearbeitet.", "Erfolg"));
-    $knoepfe[] = (UI\Knopf::ok("dshWebsiteElementBearbeiten{$element}_$id"))->addFunktion("onclick", "core.neuladen()");
+    $knoepfe[] = (UI\Knopf::ok("dshWebsiteElementBearbeiten{$element}_$id"));
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;
   case 14:
@@ -92,7 +92,7 @@ switch ($meldeid) {
     } else {
       Anfrage::setRueck("Meldung", new UI\Meldung("Daten aktivieren", "Die neuen Daten wurden aktiviert.", "Erfolg"));
     }
-    $knoepfe[] = (UI\Knopf::ok())->addFunktion("onclick", "core.neuladen()");
+    $knoepfe[] = UI\Knopf::ok();
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;
   case 16:
@@ -105,12 +105,33 @@ switch ($meldeid) {
   case 17:
     parameter("element", "id");
     Anfrage::setRueck("Meldung", new UI\Meldung("Element löschen", "Das Element wurde gelöscht.", "Erfolg"));
-    $knoepfe[] = (UI\Knopf::ok("dshWebsiteElementBearbeiten{$element}_$id"))->addFunktion("onclick", "core.neuladen()");
+    $knoepfe[] = (UI\Knopf::ok("dshWebsiteElementBearbeiten{$element}_$id"));
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;
   case 18:
     Anfrage::setRueck("Meldung", new UI\Meldung("Fehlermeldungen bearbeiten", "Die Fehlermeldungen wurden bearbeitet.", "Erfolg"));
-    $knoepfe[] = (UI\Knopf::ok())->addFunktion("onclick", "core.neuladen()");
+    $knoepfe[] = UI\Knopf::ok();
+    Anfrage::setRueck("Knöpfe", $knoepfe);
+    break;
+  case 19:
+    parameter("element", "id", "version");
+    if ($version == "a") {
+      Anfrage::setRueck("Meldung", new UI\Meldung("Daten wiederherstellen", "Soll die Daten wirklich wiederhergestellt werden?", "Warnung"));
+      $knoepfe[] = new UI\Knopf("Daten wiederherstellen", "Erfolg", "website.elemente.setzen.version.ausfuehren('$element', $id, 'a')");
+    } else {
+      Anfrage::setRueck("Meldung", new UI\Meldung("Daten aktivieren", "Soll die Daten wirklich aktiviert werden?", "Warnung"));
+      $knoepfe[] = new UI\Knopf("Daten aktivieren", "Erfolg", "website.elemente.setzen.version.ausfuehren('$element', $id, 'n')");
+    }
+    Anfrage::setRueck("Knöpfe", $knoepfe);
+    break;
+  case 20:
+    parameter("element", "id", "version");
+    if ($version == "a") {
+      Anfrage::setRueck("Meldung", new UI\Meldung("Daten wiederherstellen", "Die alten Daten wurden wiederhergestellt.", "Erfolg"));
+    } else {
+      Anfrage::setRueck("Meldung", new UI\Meldung("Daten aktivieren", "Die neuen Daten wurden aktiviert.", "Erfolg"));
+    }
+    $knoepfe[] = UI\Knopf::ok();
     Anfrage::setRueck("Knöpfe", $knoepfe);
     break;
 }

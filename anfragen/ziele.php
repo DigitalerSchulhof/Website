@@ -21,4 +21,5 @@ $ZIELE[18] = "elemente/bearbeitenspeichern.php";
 $ZIELE[19] = "verwaltung/seiten/setzen/version.php";
 $ZIELE[20] = "elemente/loeschen.php";
 $ZIELE[21] = "verwaltung/fehlermeldungen/speichern.php";
+$ZIELE[22] = "elemente/setzen/version.php";
 ?>

@@ -46,10 +46,10 @@ class Editor extends Element {
     $inh = $this->inhalt;
     if ($this->modus == "bearbeiten") {
       if($this->status == "l") {
-        return new UI\Notiz(self::GELOESCHT);
+        return new UI\Notiz("Gelöschter Editor");
       }
       if($this->inhalt === null) {
-        return new UI\Notiz(self::KEIN_INHALT);
+        return new UI\Notiz("Editor ohne Inhalt");
       }
     }
     return "{$this->codeAuf()}$inh{$this->codeZu()}";

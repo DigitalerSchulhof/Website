@@ -7,9 +7,6 @@ use UI;
 abstract class Element extends UI\Element {
   protected $tag = "div";
 
-  protected const KEIN_INHALT = "Kein Inhalt";
-  protected const GELOESCHT = "Gelöscht";
-
   /** @var int $id ID des Elementes */
   protected $eid;
   /** @var string $sprache A2-Kennung der Sprache */
