@@ -4,37 +4,38 @@
 
 #dshWebsiteBearbeitenAktionen {
   display: flex;
-}
-
-  #dshWebsiteBearbeitenAktionen>div {
+  & > div {
     text-align: center;
+    &.modus {
+      flex-grow: 1;
+    }
+    &.version {
+      flex-grow: 2;
+    }
+    &.aktionen {
+      flex-grow: 3;
+    }
+
+    h3 {
+      margin-bottom: 5px;
+    }
+    .dshUiKnopf {
+      margin: 5px;
+    }
   }
-  #dshWebsiteBearbeitenAktionen>div.modus {
-    flex-grow: 1;
-  }
-  #dshWebsiteBearbeitenAktionen>div.version {
-    flex-grow: 2;
-  }
-  #dshWebsiteBearbeitenAktionen>div.aktionen {
-    flex-grow: 3;
-  }
-  #dshWebsiteBearbeitenAktionen>div h3 {
-    margin-bottom: 5px;
-  }
-  #dshWebsiteBearbeitenAktionen>div .dshUiKnopf {
-    margin: 5px;
-  }
+}
 
 .dshSeiteH #dshWebsiteBearbeitenAktionen {
   flex-flow: column;
-}
 
-.dshSeiteH #dshWebsiteBearbeitenAktionen>div:not(:first-child){
-  margin-top: 10px;
-}
-
-.dshSeiteH #dshWebsiteBearbeitenAktionen>div .dshUiKnopf {
-  width: inherit;
+  & > div {
+    &:not(:first-child) {
+      margin-top: 10px;
+    }
+    .dshUiKnopf {
+      width: inherit;
+    }
+  }
 }
 
 .dshWebsiteBearbeitbar {
@@ -48,16 +49,18 @@
   height: 6px;
   cursor: pointer;
   transition: background-color 250ms ease-in-out;
-}
 
-.dshWebsiteNeuBalken+div {
-  display: none;
-}
-.dshWebsiteNeuBalken+div>.dshUiKnopf {
-  margin: 5px;
-}
-.dshWebsiteNeuBalken.dshWebsiteNeuSichtbar+div {
-  display: flex;
+  & + div {
+    display: none;
+
+    & > .dshUiKnopf {
+      margin: 5px;
+    }
+  }
+
+  &.dshWebsiteNeuSichtbar + div {
+    display: flex;
+  }
 }
 
 // FARBEN
@@ -69,10 +72,13 @@
   background-color: @abstufung1;
 }
 
-.dshWebsiteNeuBalken,
-.dshWebsiteNeuBalken+div {
-  background-color: @erfolgHintergrund;
-}
-.dshWebsiteNeuBalken:hover {
-  background-color: @erfolgAkzent;
+.dshWebsiteNeuBalken {
+  &,
+  & + div {
+    background-color: @erfolgHintergrund;
+  }
+
+  &:hover {
+    background-color: @erfolgAkzent;
+  }
 }
