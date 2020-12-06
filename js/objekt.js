@@ -1,2 +1,0 @@
-var website = {};
-website.element = {};

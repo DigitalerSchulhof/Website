@@ -125,7 +125,7 @@ abstract class Element extends UI\Element {
   /**
    * Setzt die ID des Elements
    *
-   * @param number $eid :)
+   * @param number $eid
    * @return self
    */
   public function setEId($eid) : self {
