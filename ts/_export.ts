@@ -3,11 +3,37 @@ import * as elemente from "./elemente";
 import elementListe from "./elemente/_export";
 import verwaltung from "./verwaltung/_export";
 import { SortierParameter } from "module/UI/ts/elemente/tabelle";
-import { AnfrageDatenLeer } from "ts/ajax";
+import { AnfrageAntwortCode, AnfrageAntwortLeer, AnfrageDatenLeer } from "ts/ajax";
 import { FehlermeldungenDaten } from "./verwaltung/fehlermeldungen";
 import { SeiteDaten } from "./verwaltung/seiten";
 import { ElementDaten } from "./elemente";
 import { SpracheDaten } from "./verwaltung/sprachen";
+
+export interface Antworten {
+  0: AnfrageAntwortCode;
+  1: AnfrageAntwortCode;
+  2: AnfrageAntwortLeer;
+  3: AnfrageAntwortCode;
+  4: AnfrageAntwortLeer;
+  5: AnfrageAntwortLeer;
+  6: AnfrageAntwortLeer;
+  7: AnfrageAntwortCode;
+  8: AnfrageAntwortCode;
+  9: AnfrageAntwortLeer;
+  10: AnfrageAntwortCode;
+  11: AnfrageAntwortLeer;
+  12: AnfrageAntwortLeer;
+  13: AnfrageAntwortLeer;
+  14: AnfrageAntwortLeer;
+  15: AnfrageAntwortCode;
+  16: AnfrageAntwortLeer;
+  17: AnfrageAntwortCode;
+  18: AnfrageAntwortLeer;
+  19: AnfrageAntwortLeer;
+  20: AnfrageAntwortLeer;
+  21: AnfrageAntwortLeer;
+  22: AnfrageAntwortLeer;
+}
 
 export type Status = "a" | "i";
 export type Version = "a" | "n";
